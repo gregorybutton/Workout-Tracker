@@ -35,8 +35,8 @@ const WORKOUT_PLANS = {
     { day: 'Tuesday – Lower Body', exercises: ['Lying Leg Curl 2×8', 'Back Squat 3×6', 'Romanian Deadlift 3×6', 'Leg Extension 2×10', 'Hip Abduction 2×10', 'Standing Calf Raise 3×10'] },
     { day: 'Wednesday – Rest', exercises: ['Full Body Stretching 15min', 'Foam Roll', 'Deep Breathing 5min'] },
     { day: 'Thursday – Push Day', exercises: ['Bench Press 3×8', 'Machine Shoulder Press 3×10', 'Pec Deck 3×15', 'Cable Lateral Raise 3×10', 'Overhead Extension 3×8', 'Cable Kickback 3×10'] },
-    { day: 'Friday – Pull Day', exercises: ['Deadlift 4×5', 'Pull-Ups 4×8', 'Cable Rows 4×10', 'Face Pulls 3×15', 'EZ Bar Curls 4×10', 'Hammer Curls 3×12'] },
-    { day: 'Saturday – Leg Day', exercises: ['Back Squat 5×5', 'Front Squat 3×6', 'Leg Press 4×10', 'Nordic Curls 3×6', 'Leg Curls 3×12', 'Calf Raises 5×20'] },
+    { day: 'Friday – Pull Day', exercises: ['Close Grip Lat Pulldown 3×10', 'Chest-Supported Row 3×8', 'Close-Grip Cable Row 2×15', 'Reverse Cable Flyes 3×15', 'Shrugs 4×15', 'EZ-Bar Curl 3×10', 'Machine Preacher Curl 3×15'] },
+    { day: 'Saturday – Leg Day', exercises: ['Seated Leg Curl 2×8', 'Linear Hack Squat 3×6', 'Romanian Deadlift 3×8', 'Leg Extension 2×10', 'Hip Adduction 2×10', 'Standing Calf Raise 3×10'] },
   ]),
 };
 
@@ -100,9 +100,12 @@ const EXERCISE_NOTES = {
   'Bicep Curls':            'Keep elbows pinned at your sides. Supinate at the top. Lower slowly for maximum stretch.',
   'Tricep Pushdowns':       'Elbows locked at your sides. Full extension at the bottom, don\'t let elbows flare on the way up.',
   'Back Squat':             'Brace 360°, chest tall. Break at hips and knees simultaneously. Drive knees out over toes throughout.',
+  'Seated Leg Curl':        'Sit tall with back against the pad. Curl to full contraction and pause briefly at the bottom. Return slowly for a full hamstring stretch — don\'t let the weight stack bounce.',
   'Romanian Deadlift':      'Hinge at the hips, slight knee bend. Feel the hamstring stretch before driving hips forward to stand.',
   'Standing Calf Raise':    'Stand with the balls of your feet on the edge of the platform. Lower into a full stretch, then drive up onto your toes and squeeze hard at the top. Control the descent — don\'t bounce at the bottom.',
   'Hip Abduction':          'Sit tall with back against the pad. Push knees outward against the pads in a controlled motion. Squeeze the glutes at peak contraction and return slowly — don\'t let the weight slam back.',
+  'Hip Adduction':          'Sit tall with back against the pad. Drive knees together in a controlled motion and squeeze the inner thighs at peak contraction. Return slowly — don\'t let the weight pull your knees apart.',
+  'Linear Hack Squat':      'Feet shoulder-width, toes slightly out on the platform. Keep chest tall and brace your core. Lower until thighs are parallel, driving knees out over toes. Press through the full foot to stand.',
   'Leg Extension':          'Sit tall with back against the pad. Extend to full lockout and squeeze the quad at the top. Lower slowly — don\'t let the weight drop.',
   'Leg Press':              'Feet shoulder-width, toes slightly out. Lower until hips start to tuck. Press through the full foot.',
   'Lying Leg Curl':         'Keep hips pressed into the pad throughout. Curl to full contraction, pause briefly, then lower slowly for a full hamstring stretch.',
@@ -119,6 +122,13 @@ const EXERCISE_NOTES = {
   'Hammer Curls':           'Neutral grip throughout. Trains brachialis and brachioradialis. Keep elbows tucked, avoid swinging.',
   'Front Squat':            'Elbows high, upright torso. Knees track over toes. Keep core braced to maintain the front rack position.',
   'Nordic Curls':           'Brace and lower as slowly as possible. Use your hands to catch yourself. Pull yourself back with hamstrings on the way up.',
+  'Close Grip Lat Pulldown': 'Grip shoulder-width or narrower, palms facing you. Pull elbows down toward your hips and squeeze the lats at the bottom. Control the return — don\'t let the bar yank you up.',
+  'Chest-Supported Row':    'Chest flat against the pad to eliminate momentum. Retract shoulder blades first, then row to lower chest. Squeeze at the top and lower with full control.',
+  'Close-Grip Cable Row':   'Sit tall, slight knee bend. Pull the handle to your lower sternum, driving elbows back. Squeeze shoulder blades together at the end — don\'t let shoulders roll forward on the return.',
+  'Reverse Cable Flyes':    'Slight bend in elbows, hinge forward at the hips. Lead with your elbows and pull outward to shoulder height. Squeeze the rear delts at the top before lowering slowly.',
+  'Shrugs':                 'Hold the weight at your sides, stand tall. Shrug straight up toward your ears — no rolling. Hold the contraction briefly at the top, then lower with control.',
+  'EZ-Bar Curl':            'Grip the angled part of the bar, elbows pinned at your sides. Curl to full contraction and supinate slightly at the top. Lower slowly for maximum tension.',
+  'Machine Preacher Curl':  'Upper arms flat on the pad throughout. Curl to full contraction and squeeze the bicep at the top. Lower slowly until arms are fully extended for a complete stretch.',
 };
 
 // Add your images to assets/exercises/ and replace null with require('./assets/exercises/filename.jpg')
@@ -133,6 +143,16 @@ const EXERCISE_IMAGES = {
   'Pec Deck': require('./assets/exercises/Thurs Push/pec-deck.jpg'),
   'Overhead Extension': require('./assets/exercises/Thurs Push/Overhead Extension.jpg'),
   'Cable Kickback': require('./assets/exercises/Thurs Push/cable-kickbacks.jpg'),
+  'Close Grip Lat Pulldown': require('./assets/exercises/Fri Pull/close-grip-lat-pulldown.jpg'),
+  'Chest-Supported Row': require('./assets/exercises/Fri Pull/chest-supported-row.jpg'),
+  'Close-Grip Cable Row': require('./assets/exercises/Fri Pull/close-grip-cable-row.jpg'),
+  'Reverse Cable Flyes': require('./assets/exercises/Fri Pull/reverse-cable-flyes.jpg'),
+  'EZ-Bar Curl': require('./assets/exercises/Fri Pull/ez-bar-curl.jpg'),
+  'Machine Preacher Curl': require('./assets/exercises/Fri Pull/machine-preacher-curl.jpg'),
+  'Shrugs': require('./assets/exercises/Fri Pull/shrugs.jpg'),
+  'Seated Leg Curl': require('./assets/exercises/Sat Leg/seated-leg-curl.jpg'),
+  'Hip Adduction': require('./assets/exercises/Sat Leg/hip-adduction.jpg'),
+  'Linear Hack Squat': require('./assets/exercises/Sat Leg/linear-hack-squat.jpg'),
   'Overhead Press':         null, // overhead-press.jpg (OHP)
   'Pull-Ups':               null, // pull-ups.jpg
   'Bicep Curls':            null, // bicep-curls.jpg
