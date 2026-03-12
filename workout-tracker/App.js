@@ -29,13 +29,22 @@ function buildPlan(days) { return days; }
 
 
 const WORKOUT_PLANS = {
-  'Build Muscle': buildPlan([
+  'Building Muscle - Men': buildPlan([
     { day: 'Sunday – Rest', exercises: ['Full Body Stretching 15min', 'Foam Roll', 'Deep Breathing 5min'] },
     { day: 'Monday – Upper Body', exercises: ['Incline Bench', 'Seated Cable Fly', 'Weighted Pull Ups', 'Cable Lateral Raise 3×10', 'Deficit Pendlay Row'] },
     { day: 'Tuesday – Lower Body', exercises: ['Lying Leg Curl 2×8', 'Back Squat 3×6', 'Romanian Deadlift 3×6', 'Leg Extension 2×10', 'Hip Abduction 2×10', 'Standing Calf Raise 3×10'] },
     { day: 'Wednesday – Rest', exercises: ['Full Body Stretching 15min', 'Foam Roll', 'Deep Breathing 5min'] },
     { day: 'Thursday – Push Day', exercises: ['Bench Press 3×8', 'Machine Shoulder Press 3×10', 'Pec Deck 3×15', 'Cable Lateral Raise 3×10', 'Overhead Extension 3×8', 'Cable Kickback 3×10'] },
     { day: 'Friday – Pull Day', exercises: ['Close Grip Lat Pulldown 3×10', 'Chest-Supported Row 3×8', 'Close-Grip Cable Row 2×15', 'Reverse Cable Flyes 3×15', 'Shrugs 4×15', 'EZ-Bar Curl 3×10', 'Machine Preacher Curl 3×15'] },
+    { day: 'Saturday – Leg Day', exercises: ['Seated Leg Curl 2×8', 'Linear Hack Squat 3×6', 'Romanian Deadlift 3×8', 'Leg Extension 2×10', 'Hip Adduction 2×10', 'Standing Calf Raise 3×10'] },
+  ]),
+  'Building Muscle - Women': buildPlan([
+    { day: 'Sunday – Rest', exercises: ['Full Body Stretching 15min', 'Foam Roll', 'Deep Breathing 5min'] },
+    { day: 'Monday – Glutes + Hamstrings', exercises: ['Barbell Hip Thrust 4×6-8', 'Romanian Deadlift 4×8-10', 'Lying Leg Curl 3×10-12', 'Bulgarian Split Squat 3×8-10', 'Cable Kickback 3×12-15'] },
+    { day: 'Tuesday – Upper Body (Back + Shoulders)', exercises: ['Lat Pulldown 4×8-12', 'Seated Cable Row 3×10-12', 'Dumbbell Shoulder Press 3×8-10', 'Cable Lateral Raise 3×12-15', 'Rear Delt Machine Fly 3×12-15'] },
+    { day: 'Wednesday – Rest', exercises: ['Full Body Stretching 15min', 'Foam Roll', 'Deep Breathing 5min'] },
+    { day: 'Thursday – Glute Pump / Isolation', exercises: ['Glute Bridge 4×10-12', 'Step Ups 3×10', 'Cable Glute Kickbacks 3×12-15', 'Hip Abduction Machine 3×15-20', '45° Back Extensions 3×12-15'] },
+    { day: 'Friday – Glutes + Quads', exercises: ['Back Squat 4×6-8', 'Leg Press 3×10-12', 'Walking Lunges 3×10', 'Leg Extension 3×12-15', 'Barbell Hip Thrust 3×8-10'] },
     { day: 'Saturday – Leg Day', exercises: ['Seated Leg Curl 2×8', 'Linear Hack Squat 3×6', 'Romanian Deadlift 3×8', 'Leg Extension 2×10', 'Hip Adduction 2×10', 'Standing Calf Raise 3×10'] },
   ]),
 };
@@ -80,7 +89,7 @@ const PT_PLANS = {
 
 const QUESTIONS = [
   { key: 'name', label: "What's your name?", placeholder: 'Enter your name', type: 'text' },
-  { key: 'goal', label: 'What are you looking to do?', type: 'choice', options: ['Build Muscle', 'Nutrition Plan', 'Physical Therapy'] },
+  { key: 'goal', label: 'What are you looking to do?', type: 'choice', options: ['Building Muscle - Men', 'Building Muscle - Women', 'Nutrition Plan', 'Physical Therapy'] },
 ];
 
 const EXERCISE_NOTES = {
@@ -107,6 +116,7 @@ const EXERCISE_NOTES = {
   'Hip Adduction':          'Sit tall with back against the pad. Drive knees together in a controlled motion and squeeze the inner thighs at peak contraction. Return slowly — don\'t let the weight pull your knees apart.',
   'Linear Hack Squat':      'Feet shoulder-width, toes slightly out on the platform. Keep chest tall and brace your core. Lower until thighs are parallel, driving knees out over toes. Press through the full foot to stand.',
   'Leg Extension':          'Sit tall with back against the pad. Extend to full lockout and squeeze the quad at the top. Lower slowly — don\'t let the weight drop.',
+  'Leg Extensions':         'Sit tall with back against the pad. Extend to full lockout and squeeze the quad at the top. Lower slowly — don\'t let the weight drop.',
   'Leg Press':              'Feet shoulder-width, toes slightly out. Lower until hips start to tuck. Press through the full foot.',
   'Lying Leg Curl':         'Keep hips pressed into the pad throughout. Curl to full contraction, pause briefly, then lower slowly for a full hamstring stretch.',
   'Leg Curls':              'Avoid lifting your hips off the pad. Curl to full contraction and lower with control for a full stretch.',
@@ -129,58 +139,74 @@ const EXERCISE_NOTES = {
   'Shrugs':                 'Hold the weight at your sides, stand tall. Shrug straight up toward your ears — no rolling. Hold the contraction briefly at the top, then lower with control.',
   'EZ-Bar Curl':            'Grip the angled part of the bar, elbows pinned at your sides. Curl to full contraction and supinate slightly at the top. Lower slowly for maximum tension.',
   'Machine Preacher Curl':  'Upper arms flat on the pad throughout. Curl to full contraction and squeeze the bicep at the top. Lower slowly until arms are fully extended for a complete stretch.',
+  'Barbell Hip Thrust':     'Upper back on bench, bar padded across hips. Drive through your heels and squeeze your glutes hard at the top — hips fully extended. Lower with control and repeat without losing tension.',
+  'Bulgarian Split Squat':  'Rear foot elevated on bench, front foot far enough forward to keep shin vertical. Lower until rear knee nearly touches the floor. Drive through the front heel to stand — keep torso upright.',
+  'Walking Lunges':         'Step forward into a lunge, lowering the back knee toward the floor. Push off the front foot to step forward into the next rep. Keep torso tall and core braced throughout.',
+  'Rear Delt Machine Fly':  'Adjust the handles so arms are at shoulder height. Keep a slight bend in the elbows and pull the handles back in a wide arc. Squeeze the rear delts at the peak — don\'t let the weight snap back.',
+  'Lat Pulldown':           'Grip slightly wider than shoulder-width. Lean back slightly and pull the bar to your upper chest, driving elbows down toward your hips. Control the return — don\'t let the bar yank you up.',
+  'Seated Cable Row':       'Sit tall with a slight knee bend. Pull the handle to your lower sternum, driving elbows back. Squeeze shoulder blades together at the end and return slowly — don\'t round the lower back.',
+  'Dumbbell Shoulder Press':'Sit tall, core braced. Press dumbbells from shoulder height straight up until arms are fully extended. Lower with control to just below ear level — don\'t let the weights drift forward.',
+  'Cable Lateral Raise':    'Slight forward lean. Lead with your elbow, not your wrist. Raise to shoulder height and lower with control — don\'t let the cable pull you back.',
 };
 
 // Add your images to assets/exercises/ and replace null with require('./assets/exercises/filename.jpg')
 const EXERCISE_IMAGES = {
-  'Incline Bench': require('./assets/exercises/Mon Upper Body/incline-bench.jpg'), // incline-bench.jpg
-  'Seated Cable Fly': require('./assets/exercises/Mon Upper Body/seated-cable-fly.jpg'), // seated-cable-fly.jpg
-  'Weighted Pull Ups': require('./assets/exercises/Mon Upper Body/weighted-pull-ups.jpg'), // weighted-pull-ups.jpg
-  'Cable Lateral Raise': require('./assets/exercises/Mon Upper Body/cable-lateral-raise.jpg'), // cable-side-lateral-raise.jpg
-  'Deficit Pendlay Row': require('./assets/exercises/Mon Upper Body/deficit-pendlay-row.jpg'), // deficit-pendlay-row.jpg
-  'Bench Press': require('./assets/exercises/Thurs Push/bench-press.jpg'),
-  'Machine Shoulder Press': require('./assets/exercises/Thurs Push/shoulder-press.jpg'),
-  'Pec Deck': require('./assets/exercises/Thurs Push/pec-deck.jpg'),
-  'Overhead Extension': require('./assets/exercises/Thurs Push/Overhead Extension.jpg'),
-  'Cable Kickback': require('./assets/exercises/Thurs Push/cable-kickbacks.jpg'),
-  'Close Grip Lat Pulldown': require('./assets/exercises/Fri Pull/close-grip-lat-pulldown.jpg'),
-  'Chest-Supported Row': require('./assets/exercises/Fri Pull/chest-supported-row.jpg'),
-  'Close-Grip Cable Row': require('./assets/exercises/Fri Pull/close-grip-cable-row.jpg'),
-  'Reverse Cable Flyes': require('./assets/exercises/Fri Pull/reverse-cable-flyes.jpg'),
-  'EZ-Bar Curl': require('./assets/exercises/Fri Pull/ez-bar-curl.jpg'),
-  'Machine Preacher Curl': require('./assets/exercises/Fri Pull/machine-preacher-curl.jpg'),
-  'Shrugs': require('./assets/exercises/Fri Pull/shrugs.jpg'),
-  'Seated Leg Curl': require('./assets/exercises/Sat Leg/seated-leg-curl.jpg'),
-  'Hip Adduction': require('./assets/exercises/Sat Leg/hip-adduction.jpg'),
-  'Linear Hack Squat': require('./assets/exercises/Sat Leg/linear-hack-squat.jpg'),
-  'Overhead Press':         null, // overhead-press.jpg (OHP)
-  'Pull-Ups':               null, // pull-ups.jpg
-  'Bicep Curls':            null, // bicep-curls.jpg
-  'Tricep Pushdowns':       null, // tricep-pushdowns.jpg
-  'Back Squat': require('./assets/exercises/Tues Lower Body/back-squat.jpg'), // back-squat.jpg
-  'Romanian Deadlift': require('./assets/exercises/Tues Lower Body/romanian-deadlift.jpg'),
-  'Leg Press':              null, // leg-press.jpg
-  'Leg Extension': require('./assets/exercises/Tues Lower Body/leg-extension.jpg'),
-  'Hip Abduction': require('./assets/exercises/Tues Lower Body/hip-abduction.jpg'),
-  'Standing Calf Raise': require('./assets/exercises/Tues Lower Body/standing-calf-raise.jpg'),
-  'Lying Leg Curl': require('./assets/exercises/Tues Lower Body/lying-leg-curl.jpg'),
-  'Calf Raises':            null, // calf-raises.jpg
-  'Incline Dumbbell Press': null, // incline-dumbbell-press.jpg
-  'Lateral Raises':         null, // lateral-raises.jpg
-  'Tricep Dips':            null, // tricep-dips.jpg
-  'Cable Flys':             null, // cable-flys.jpg
-  'Deadlift':               null, // deadlift.jpg
-  'Cable Rows':             null, // cable-rows.jpg
-  'Face Pulls':             null, // face-pulls.jpg
-  'Barbell Curls':          null, // barbell-curls.jpg (EZ Bar Curls)
-  'Hammer Curls':           null, // hammer-curls.jpg
-  'Front Squat':            null, // front-squat.jpg
-  'Nordic Curls':           null, // nordic-curls.jpg
+  'Incline Bench':           require('./assets/exercises/incline-bench.jpg'),
+  'Seated Cable Fly':        require('./assets/exercises/seated-cable-fly.jpg'),
+  'Weighted Pull Ups':       require('./assets/exercises/weighted-pull-ups.jpg'),
+  'Cable Lateral Raise':     require('./assets/exercises/cable-lateral-raise.jpg'),
+  'Deficit Pendlay Row':     require('./assets/exercises/deficit-pendlay-row.jpg'),
+  'Barbell Hip Thrust':      require('./assets/exercises/barbell-hip-thrusts.jpg'),
+  'Bulgarian Split Squat':   require('./assets/exercises/bulgarian-split-squat.jpg'),
+  'Bench Press':             require('./assets/exercises/bench-press.jpg'),
+  'Machine Shoulder Press':  require('./assets/exercises/shoulder-press.jpg'),
+  'Pec Deck':                require('./assets/exercises/pec-deck.jpg'),
+  'Overhead Extension':      require('./assets/exercises/Overhead Extension.jpg'),
+  'Cable Kickback':          require('./assets/exercises/cable-kickbacks.jpg'),
+  'Close Grip Lat Pulldown': require('./assets/exercises/close-grip-lat-pulldown.jpg'),
+  'Chest-Supported Row':     require('./assets/exercises/chest-supported-row.jpg'),
+  'Close-Grip Cable Row':    require('./assets/exercises/close-grip-cable-row.jpg'),
+  'Reverse Cable Flyes':     require('./assets/exercises/reverse-cable-flyes.jpg'),
+  'EZ-Bar Curl':             require('./assets/exercises/ez-bar-curl.jpg'),
+  'Machine Preacher Curl':   require('./assets/exercises/machine-preacher-curl.jpg'),
+  'Shrugs':                  require('./assets/exercises/shrugs.jpg'),
+  'Seated Leg Curl':         require('./assets/exercises/seated-leg-curl.jpg'),
+  'Hip Adduction':           require('./assets/exercises/hip-adduction.jpg'),
+  'Linear Hack Squat':       require('./assets/exercises/linear-hack-squat.jpg'),
+  'Back Squat':              require('./assets/exercises/back-squat.jpg'),
+  'Romanian Deadlift':       require('./assets/exercises/romanian-deadlift.jpg'),
+  'Leg Press':               require('./assets/exercises/leg-press.jpg'),
+  'Leg Extension':           require('./assets/exercises/leg-extension.jpg'),
+  'Leg Extensions':          require('./assets/exercises/leg-extension.jpg'),
+  'Hip Abduction':           require('./assets/exercises/hip-abduction.jpg'),
+  'Standing Calf Raise':     require('./assets/exercises/standing-calf-raise.jpg'),
+  'Lying Leg Curl':          require('./assets/exercises/lying-leg-curl.jpg'),
+  'Walking Lunges':          require('./assets/exercises/walking-lunges.jpg'),
+  'Rear Delt Machine Fly':   require('./assets/exercises/rear-delt-machine-fly.jpg'),
+  'Lat Pulldown':            require('./assets/exercises/lat-pulldown.jpg'),
+  'Seated Cable Row':        require('./assets/exercises/seated-cable-row.jpg'),
+  'Dumbbell Shoulder Press': require('./assets/exercises/dumbell-shoulder-press.jpg'),
+  'Overhead Press':          null,
+  'Pull-Ups':                null,
+  'Bicep Curls':             null,
+  'Tricep Pushdowns':        null,
+  'Calf Raises':             null,
+  'Incline Dumbbell Press':  null,
+  'Lateral Raises':          null,
+  'Tricep Dips':             null,
+  'Cable Flys':              null,
+  'Deadlift':                null,
+  'Cable Rows':              null,
+  'Face Pulls':              null,
+  'Barbell Curls':           null,
+  'Hammer Curls':            null,
+  'Front Squat':             null,
+  'Nordic Curls':            null,
 };
 
 function cleanExerciseName(name) {
   return name
-    .replace(/\s*\d+[×xX]\d+\s*/g, '')
+    .replace(/\s*\d+[×xX]\d+(-\d+)?\s*/g, '')
     .replace(/\s*\d+min\s*/g, '')
     .replace(/\s*\d+s\b/g, '')
     .replace(/^DB\s/i, 'Dumbbell ')
@@ -369,8 +395,8 @@ export default function Root() {
       setScreen('physicalTherapy');
       return;
     }
-    if (key === 'goal' && value === 'Build Muscle') {
-      setPlan(WORKOUT_PLANS['Build Muscle']);
+    if (key === 'goal' && (value === 'Building Muscle - Men' || value === 'Building Muscle - Women')) {
+      setPlan(WORKOUT_PLANS[value]);
       setScreen('plan');
       return;
     }
@@ -659,7 +685,7 @@ export default function Root() {
           <Text style={styles.backText}>‹ Back</Text>
         </TouchableOpacity>
         <Text style={styles.title}>{isPT ? `${answers.ptBodyPart} Rehab` : 'Your Workout Plan'}</Text>
-        <Text style={styles.subtitle}>{isPT ? answers.name : answers.goal === 'Build Muscle' ? `${answers.name}'s Build Muscle Plan` : `${answers.name}'s ${answers.goal} Plan · ${answers.level}`}</Text>
+        <Text style={styles.subtitle}>{isPT ? answers.name : (answers.goal === 'Building Muscle - Men' || answers.goal === 'Building Muscle - Women') ? `${answers.name}'s ${answers.goal} Plan` : `${answers.name}'s ${answers.goal} Plan · ${answers.level}`}</Text>
         <FlatList
           data={plan}
           keyExtractor={(_, i) => i.toString()}
