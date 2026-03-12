@@ -30,19 +30,19 @@ function buildPlan(days) { return days; }
 
 const WORKOUT_PLANS = {
   'Building Muscle - Men': buildPlan([
-    { day: 'Sunday – Rest', exercises: ['Full Body Stretching 15min', 'Foam Roll', 'Deep Breathing 5min'] },
+    { day: 'Sunday – Rest', exercises: ['Full Body Stretching 15min', 'Full Body Foam Rolling Routine', 'Incline Walk 30min'] },
     { day: 'Monday – Upper Body', exercises: ['Incline Bench', 'Seated Cable Fly', 'Weighted Pull Ups', 'Cable Lateral Raise 3×10', 'Deficit Pendlay Row'] },
     { day: 'Tuesday – Lower Body', exercises: ['Lying Leg Curl 2×8', 'Back Squat 3×6', 'Romanian Deadlift 3×6', 'Leg Extension 2×10', 'Hip Abduction 2×10', 'Standing Calf Raise 3×10'] },
-    { day: 'Wednesday – Rest', exercises: ['Full Body Stretching 15min', 'Foam Roll', 'Deep Breathing 5min'] },
+    { day: 'Wednesday – Rest', exercises: ['Full Body Stretching 15min', 'Full Body Foam Rolling Routine', 'Incline Walk 30min'] },
     { day: 'Thursday – Push Day', exercises: ['Bench Press 3×8', 'Machine Shoulder Press 3×10', 'Pec Deck 3×15', 'Cable Lateral Raise 3×10', 'Overhead Extension 3×8', 'Cable Kickback 3×10'] },
     { day: 'Friday – Pull Day', exercises: ['Close Grip Lat Pulldown 3×10', 'Chest-Supported Row 3×8', 'Close-Grip Cable Row 2×15', 'Reverse Cable Flyes 3×15', 'Shrugs 4×15', 'EZ-Bar Curl 3×10', 'Machine Preacher Curl 3×15'] },
     { day: 'Saturday – Leg Day', exercises: ['Seated Leg Curl 2×8', 'Linear Hack Squat 3×6', 'Romanian Deadlift 3×8', 'Leg Extension 2×10', 'Hip Adduction 2×10', 'Standing Calf Raise 3×10'] },
   ]),
   'Building Muscle - Women': buildPlan([
-    { day: 'Sunday – Rest', exercises: ['Full Body Stretching 15min', 'Foam Roll', 'Deep Breathing 5min'] },
+    { day: 'Sunday – Rest', exercises: ['Full Body Stretching 15min', 'Full Body Foam Rolling Routine', 'Incline Walk 30min'] },
     { day: 'Monday – Glutes + Hamstrings', exercises: ['Barbell Hip Thrust 4×6-8', 'Romanian Deadlift 4×8-10', 'Lying Leg Curl 3×10-12', 'Bulgarian Split Squat 3×8-10', 'Cable Kickback 3×12-15'] },
     { day: 'Tuesday – Upper Body (Back + Shoulders)', exercises: ['Lat Pulldown 4×8-12', 'Seated Cable Row 3×10-12', 'Dumbbell Shoulder Press 3×8-10', 'Cable Lateral Raise 3×12-15', 'Rear Delt Machine Fly 3×12-15'] },
-    { day: 'Wednesday – Rest', exercises: ['Full Body Stretching 15min', 'Foam Roll', 'Deep Breathing 5min'] },
+    { day: 'Wednesday – Rest', exercises: ['Full Body Stretching 15min', 'Full Body Foam Rolling Routine', 'Incline Walk 30min'] },
     { day: 'Thursday – Glute Pump / Isolation', exercises: ['Glute Bridge 4×10-12', 'Step Ups 3×10', 'Cable Glute Kickbacks 3×12-15', 'Hip Abduction Machine 3×15-20', '45° Back Extensions 3×12-15'] },
     { day: 'Friday – Glutes + Quads', exercises: ['Back Squat 4×6-8', 'Leg Press 3×10-12', 'Walking Lunges 3×10', 'Leg Extension 3×12-15', 'Barbell Hip Thrust 3×8-10'] },
     { day: 'Saturday – Leg Day', exercises: ['Seated Leg Curl 2×8', 'Linear Hack Squat 3×6', 'Romanian Deadlift 3×8', 'Leg Extension 2×10', 'Hip Adduction 2×10', 'Standing Calf Raise 3×10'] },
@@ -376,6 +376,7 @@ export default function Root() {
   const [loggingExercise, setLoggingExercise] = useState(null);
   const [nutritionForm, setNutritionForm] = useState({ age: '', gender: '', heightFt: '', heightIn: '', weight: '', activityLevel: '' });
   const [nutritionResult, setNutritionResult] = useState(null);
+  const [stretchImgModal, setStretchImgModal] = useState(null);
 
   function logKey(dayTitle, exercise) {
     return `${dayTitle}|${exercise}`;
@@ -716,28 +717,79 @@ export default function Root() {
           keyExtractor={(_, i) => i.toString()}
           renderItem={({ item }) => {
             const entryCount = (logs[logKey(selectedDay.day, item)] || []).length;
+            const isStretching = item.includes('Full Body Stretching');
+            const isFoamRolling = item.includes('Full Body Foam Rolling');
+            const foamRollingItems = [
+              { label: 'Upper Back', duration: '1 min', emoji: '🔵' },
+              { label: 'Lats', duration: '45 sec each side', emoji: '🔵' },
+              { label: 'Glutes', duration: '45 sec each side', emoji: '🔵' },
+              { label: 'Hamstrings', duration: '1 min', emoji: '🔵' },
+              { label: 'Quads', duration: '1 min', emoji: '🔵' },
+              { label: 'Calves', duration: '45 sec each side', emoji: '🔵' },
+            ];
+            const stretchingItems = [
+              { label: 'Forward Fold', duration: '45 sec', img: require('./assets/stretches/forward-fold.jpg') },
+              { label: 'Hip Flexor', duration: '45 sec each side', img: require('./assets/stretches/hip-flexor.jpg') },
+              { label: 'Figure 4', duration: '45 sec each side', img: require('./assets/stretches/figure-4.jpg') },
+              { label: "Child's Pose", duration: '1 min', img: require('./assets/stretches/childs-pose.jpg') },
+              { label: 'Chest Stretch', duration: '45 sec each side', img: require('./assets/stretches/chest-stretch.jpg') },
+              { label: 'Spinal Twist', duration: '45 sec each side', img: require('./assets/stretches/spinal-twist.jpg') },
+              { label: 'Deep Squat', duration: '1 min', img: require('./assets/stretches/Deep Squat.jpg') },
+            ];
             return (
               <View style={styles.exerciseCard}>
-                <View style={styles.exerciseCardTop}>
-                  <ExerciseImage exerciseName={item} />
-                  <View style={styles.exerciseCardInfo}>
+                <View style={[styles.exerciseCardTop, (isStretching || isFoamRolling) && { justifyContent: 'center' }]}>
+                  {!isStretching && !isFoamRolling && <ExerciseImage exerciseName={item} />}
+                  <View style={[styles.exerciseCardInfo, (isStretching || isFoamRolling) && { alignItems: 'center' }]}>
                     <Text style={styles.exerciseName}>{item}</Text>
-                    <Text style={styles.logCount}>
-                      {entryCount > 0 ? `${entryCount} week${entryCount > 1 ? 's' : ''} logged` : 'No logs yet'}
-                    </Text>
+                    {!selectedDay.day.includes('Rest') && (
+                      <Text style={styles.logCount}>
+                        {entryCount > 0 ? `${entryCount} week${entryCount > 1 ? 's' : ''} logged` : 'No logs yet'}
+                      </Text>
+                    )}
                   </View>
                 </View>
-                <View style={styles.exerciseBtns}>
-                  <TouchableOpacity style={styles.logBtn} onPress={() => openLogModal(item)}>
-                    <Text style={styles.logBtnText}>+ Log Weight</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.logBtn, styles.progressBtn]}
-                    onPress={() => { setSelectedExercise(item); setScreen('progress'); }}
-                  >
-                    <Text style={styles.logBtnText}>See Progress</Text>
-                  </TouchableOpacity>
-                </View>
+                {isFoamRolling && (
+                  <View style={styles.stretchGrid}>
+                    {foamRollingItems.map((s, i) => (
+                      <View key={i} style={styles.stretchItem}>
+                        <Text style={styles.stretchEmoji}>{s.emoji}</Text>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.stretchLabel}>{s.label}</Text>
+                          <Text style={styles.stretchDuration}>{s.duration}</Text>
+                        </View>
+                      </View>
+                    ))}
+                  </View>
+                )}
+                {isStretching && (
+                  <View style={styles.stretchGrid}>
+                    {stretchingItems.map((s, i) => (
+                      <View key={i} style={styles.stretchItem}>
+                        <TouchableOpacity onPress={() => setStretchImgModal(s)}>
+                          <Image source={s.img} style={styles.stretchImg} resizeMode="cover" />
+                        </TouchableOpacity>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.stretchLabel}>{s.label}</Text>
+                          <Text style={styles.stretchDuration}>{s.duration}</Text>
+                        </View>
+                      </View>
+                    ))}
+                  </View>
+                )}
+                {!selectedDay.day.includes('Rest') && (
+                  <View style={styles.exerciseBtns}>
+                    <TouchableOpacity style={styles.logBtn} onPress={() => openLogModal(item)}>
+                      <Text style={styles.logBtnText}>+ Log Weight</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.logBtn, styles.progressBtn]}
+                      onPress={() => { setSelectedExercise(item); setScreen('progress'); }}
+                    >
+                      <Text style={styles.logBtnText}>See Progress</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
               </View>
             );
           }}
@@ -749,6 +801,17 @@ export default function Root() {
           onSave={saveLog}
           onCancel={() => setLogModalVisible(false)}
         />
+        <Modal visible={!!stretchImgModal} transparent animationType="fade">
+          <TouchableOpacity style={styles.imgModalOverlay} onPress={() => setStretchImgModal(null)} activeOpacity={1}>
+            <View style={styles.imgModalCard}>
+              <Image source={stretchImgModal?.img} style={{ width: '100%', height: 280, borderTopLeftRadius: 12, borderTopRightRadius: 12 }} resizeMode="cover" />
+              <View style={styles.imgModalTextBox}>
+                <Text style={styles.imgModalTitle}>{stretchImgModal?.label}</Text>
+                <Text style={styles.imgModalNotes}>{stretchImgModal?.duration}</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+        </Modal>
       </View>
     );
   }
@@ -944,6 +1007,13 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   exerciseCardTop: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, gap: 10 },
+  stretchGrid: { marginTop: 12, flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  stretchItem: { flexDirection: 'row', alignItems: 'center', gap: 10, width: '47%', backgroundColor: COLORS.input, borderRadius: 10, padding: 10 },
+  stretchNumber: { color: COLORS.muted, fontSize: 16, fontWeight: 'bold', width: 22, textAlign: 'center' },
+  stretchEmoji: { fontSize: 28 },
+  stretchImg: { width: 64, height: 64, borderRadius: 8 },
+  stretchLabel: { color: COLORS.text, fontSize: 13, fontWeight: '600' },
+  stretchDuration: { color: COLORS.muted, fontSize: 11 },
   exerciseCardInfo: { flex: 1 },
   exImgBox: { width: 150, height: 90, borderRadius: 8, backgroundColor: COLORS.input, justifyContent: 'center', alignItems: 'center' },
   exImgEmoji: { fontSize: 36 },
