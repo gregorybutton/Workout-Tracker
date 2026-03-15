@@ -17,12 +17,12 @@ import {
 } from 'react-native';
 
 const COLORS = {
-  bg: '#1a1a2e',
-  card: '#16213e',
+  bg: '#13132b',
+  card: '#1c1c3a',
   accent: '#e94560',
   text: '#ffffff',
-  muted: '#aaaaaa',
-  input: '#0f3460',
+  muted: '#8888aa',
+  input: '#23234a',
   success: '#4caf50',
 };
 
@@ -32,10 +32,10 @@ function buildPlan(days) { return days; }
 const WORKOUT_PLANS = {
   'Building Muscle - Men': buildPlan([
     { day: 'Sunday – Rest', exercises: ['Full Body Stretching 15min', 'Full Body Foam Rolling Routine', 'Incline Walk 30min'] },
-    { day: 'Monday – Upper Body', exercises: ['Incline Bench', 'Seated Cable Fly', 'Weighted Pull Ups', 'Cable Lateral Raise 3×10', 'Deficit Pendlay Row'] },
-    { day: 'Tuesday – Lower Body', exercises: ['Lying Leg Curl 2×8', 'Back Squat 3×6', 'Romanian Deadlift 3×6', 'Leg Extension 2×10', 'Hip Abduction 2×10', 'Standing Calf Raise 3×10'] },
+    { day: 'Monday – Upper Body', exercises: ['Incline Bench Press 4×6-8', 'Weighted Pull Ups 4×6-8', 'Bent Over Barbell Row 3×8-10', 'Pec Deck 3×10-12', 'Seated Lateral Raise 3×12-15', 'Cable Tricep Pushdowns 3×10-12', 'Incline Dumbbell Curl 3×10-12'] },
+    { day: 'Tuesday – Lower Body', exercises: ['Lying Leg Curl 2×8', 'Barbell Back Squat 4×5-8', 'Romanian Deadlift 3×8-10', 'Leg Press 3×10-12', 'Seated Calf Raise 4×10-15'] },
     { day: 'Wednesday – Rest', exercises: ['Full Body Stretching 15min', 'Full Body Foam Rolling Routine', 'Incline Walk 30min'] },
-    { day: 'Thursday – Push Day', exercises: ['Bench Press 3×8', 'Machine Shoulder Press 3×10', 'Pec Deck 3×15', 'Cable Lateral Raise 3×10', 'Overhead Extension 3×8', 'Cable Kickback 3×10'] },
+    { day: 'Thursday – Push Day', exercises: ['Flat Bench Press 4×5-8', 'Machine Shoulder Press 3×10', 'Pec Deck 3×15', 'Seated Lateral Raise 4×12-15', 'Overhead Extension 3×8'] },
     { day: 'Friday – Pull Day', exercises: ['Close Grip Lat Pulldown 3×10', 'Chest-Supported Row 3×8', 'Close-Grip Cable Row 2×15', 'Reverse Cable Flyes 3×15', 'Shrugs 4×15', 'EZ-Bar Curl 3×10', 'Machine Preacher Curl 3×15'] },
     { day: 'Saturday – Leg Day', exercises: ['Seated Leg Curl 2×8', 'Linear Hack Squat 3×6', 'Romanian Deadlift 3×8', 'Leg Extension 2×10', 'Hip Adduction 2×10', 'Standing Calf Raise 3×10'] },
   ]),
@@ -52,12 +52,18 @@ const WORKOUT_PLANS = {
 
 
 const QUESTIONS = [
-  { key: 'name', label: "What's your name?", placeholder: 'Enter your name', type: 'text' },
-  { key: 'goal', label: 'What are you looking to do?', type: 'choice', options: ['Building Muscle - Men', 'Building Muscle - Women', 'Nutrition Plan'] },
+  { key: 'goal', label: "What's your goal?", type: 'choice', options: ['Building Muscle - Men', 'Building Muscle - Women', 'Get a Nutrition Plan'] },
 ];
+
+const GOAL_META = {
+  'Building Muscle - Men':   { emoji: '💪', subtitle: 'Track workouts' },
+  'Building Muscle - Women': { emoji: '💪', subtitle: 'Track workouts' },
+  'Get a Nutrition Plan':    { emoji: '🥗', subtitle: 'Calculate calories' },
+};
 
 const EXERCISE_NOTES = {
   'Incline Bench':          'Keep shoulder blades pinched and depressed. Drive feet into the floor. Lower the bar to upper chest, elbows at ~60°.',
+  'Incline Bench Press':    'Keep shoulder blades pinched and depressed. Drive feet into the floor. Lower the bar to upper chest, elbows at ~60°.',
   'Seated Cable Fly':       'Slight bend in elbows throughout. Lead with your elbows, not your hands. Squeeze the chest at the peak contraction.',
   'Weighted Pull Ups':      'Start from a dead hang. Pull elbows down and back toward your hips. Avoid shrugging — keep shoulders packed down.',
   'Cable Side Lateral Raise': 'Slight forward lean. Lead with your elbow, not your wrist. Pause briefly at shoulder height before controlled lowering.',
@@ -73,9 +79,11 @@ const EXERCISE_NOTES = {
   'Bicep Curls':            'Keep elbows pinned at your sides. Supinate at the top. Lower slowly for maximum stretch.',
   'Tricep Pushdowns':       'Elbows locked at your sides. Full extension at the bottom, don\'t let elbows flare on the way up.',
   'Back Squat':             'Brace 360°, chest tall. Break at hips and knees simultaneously. Drive knees out over toes throughout.',
+  'Barbell Back Squat':     'Brace 360°, chest tall. Break at hips and knees simultaneously. Drive knees out over toes throughout.',
   'Seated Leg Curl':        'Sit tall with back against the pad. Curl to full contraction and pause briefly at the bottom. Return slowly for a full hamstring stretch — don\'t let the weight stack bounce.',
   'Romanian Deadlift':      'Hinge at the hips, slight knee bend. Feel the hamstring stretch before driving hips forward to stand.',
   'Standing Calf Raise':    'Stand with the balls of your feet on the edge of the platform. Lower into a full stretch, then drive up onto your toes and squeeze hard at the top. Control the descent — don\'t bounce at the bottom.',
+  'Seated Calf Raise':      'Sit tall with the pad resting just above your knees. Lower into a full stretch, then drive up onto your toes and squeeze hard at the top. Control the descent — don\'t bounce at the bottom.',
   'Hip Abduction':          'Sit tall with back against the pad. Push knees outward against the pads in a controlled motion. Squeeze the glutes at peak contraction and return slowly — don\'t let the weight slam back.',
   'Hip Adduction':          'Sit tall with back against the pad. Drive knees together in a controlled motion and squeeze the inner thighs at peak contraction. Return slowly — don\'t let the weight pull your knees apart.',
   'Linear Hack Squat':      'Feet shoulder-width, toes slightly out on the platform. Keep chest tall and brace your core. Lower until thighs are parallel, driving knees out over toes. Press through the full foot to stand.',
@@ -110,63 +118,68 @@ const EXERCISE_NOTES = {
   'Lat Pulldown':           'Grip slightly wider than shoulder-width. Lean back slightly and pull the bar to your upper chest, driving elbows down toward your hips. Control the return — don\'t let the bar yank you up.',
   'Seated Cable Row':       'Sit tall with a slight knee bend. Pull the handle to your lower sternum, driving elbows back. Squeeze shoulder blades together at the end and return slowly — don\'t round the lower back.',
   'Dumbbell Shoulder Press':'Sit tall, core braced. Press dumbbells from shoulder height straight up until arms are fully extended. Lower with control to just below ear level — don\'t let the weights drift forward.',
-  'Cable Lateral Raise':    'Slight forward lean. Lead with your elbow, not your wrist. Raise to shoulder height and lower with control — don\'t let the cable pull you back.',
+  'Seated Lateral Raise': 'Sit tall on the edge of a bench, dumbbells at your sides. Lead with your elbows and raise arms out to shoulder height — keep a slight bend in the elbow throughout. Pause briefly at the top, then lower slowly with control. Avoid shrugging or using momentum.',
+  'Pec Deck':                  'Adjust the seat so handles are at chest height. Keep a slight bend in the elbows and lead with your elbows — not your hands. Squeeze the chest hard at the peak contraction, then return slowly for a full stretch. Don\'t let the weight snap back.',
+  'Bent Over Barbell Row':     'Hinge at the hips until torso is roughly parallel to the floor, slight knee bend. Brace your core and keep your back flat throughout. Pull the bar to your lower chest, driving elbows back and squeezing the shoulder blades together at the top. Lower with control — don\'t let your back round on the descent.',
+  'Cable Tricep Pushdowns':    'Set the cable to a high pulley with a rope or bar attachment. Keep elbows tucked at your sides throughout — they should not move. Push down to full extension and squeeze the triceps hard at the bottom. Return slowly, allowing a full stretch at the top before the next rep.',
 };
 
-// Add your images to assets/exercises/ and replace null with require('./assets/exercises/filename.jpg')
+// Local images — all commented out to use ExerciseDB API instead.
+// Uncomment any entry to override the API with your own photo.
 const EXERCISE_IMAGES = {
-  'Incline Bench':           require('./assets/exercises/incline-bench.jpg'),
-  'Seated Cable Fly':        require('./assets/exercises/seated-cable-fly.jpg'),
-  'Weighted Pull Ups':       require('./assets/exercises/weighted-pull-ups.jpg'),
-  'Cable Lateral Raise':     require('./assets/exercises/cable-lateral-raise.jpg'),
-  'Deficit Pendlay Row':     require('./assets/exercises/deficit-pendlay-row.jpg'),
-  'Barbell Hip Thrust':      require('./assets/exercises/barbell-hip-thrusts.jpg'),
-  'Bulgarian Split Squat':   require('./assets/exercises/bulgarian-split-squat.jpg'),
-  'Bench Press':             require('./assets/exercises/bench-press.jpg'),
-  'Machine Shoulder Press':  require('./assets/exercises/shoulder-press.jpg'),
-  'Pec Deck':                require('./assets/exercises/pec-deck.jpg'),
-  'Overhead Extension':      require('./assets/exercises/Overhead Extension.jpg'),
-  'Cable Kickback':          require('./assets/exercises/cable-kickbacks.jpg'),
-  'Close Grip Lat Pulldown': require('./assets/exercises/close-grip-lat-pulldown.jpg'),
-  'Chest-Supported Row':     require('./assets/exercises/chest-supported-row.jpg'),
-  'Close-Grip Cable Row':    require('./assets/exercises/close-grip-cable-row.jpg'),
-  'Reverse Cable Flyes':     require('./assets/exercises/reverse-cable-flyes.jpg'),
-  'EZ-Bar Curl':             require('./assets/exercises/ez-bar-curl.jpg'),
-  'Machine Preacher Curl':   require('./assets/exercises/machine-preacher-curl.jpg'),
-  'Shrugs':                  require('./assets/exercises/shrugs.jpg'),
-  'Seated Leg Curl':         require('./assets/exercises/seated-leg-curl.jpg'),
-  'Hip Adduction':           require('./assets/exercises/hip-adduction.jpg'),
-  'Linear Hack Squat':       require('./assets/exercises/linear-hack-squat.jpg'),
-  'Back Squat':              require('./assets/exercises/back-squat.jpg'),
-  'Romanian Deadlift':       require('./assets/exercises/romanian-deadlift.jpg'),
-  'Leg Press':               require('./assets/exercises/leg-press.jpg'),
-  'Leg Extension':           require('./assets/exercises/leg-extension.jpg'),
-  'Leg Extensions':          require('./assets/exercises/leg-extension.jpg'),
-  'Hip Abduction':           require('./assets/exercises/hip-abduction.jpg'),
-  'Standing Calf Raise':     require('./assets/exercises/standing-calf-raise.jpg'),
-  'Lying Leg Curl':          require('./assets/exercises/lying-leg-curl.jpg'),
-  'Walking Lunges':          require('./assets/exercises/walking-lunges.jpg'),
-  'Rear Delt Machine Fly':   require('./assets/exercises/rear-delt-machine-fly.jpg'),
-  'Lat Pulldown':            require('./assets/exercises/lat-pulldown.jpg'),
-  'Seated Cable Row':        require('./assets/exercises/seated-cable-row.jpg'),
-  'Dumbbell Shoulder Press': require('./assets/exercises/dumbell-shoulder-press.jpg'),
-  'Overhead Press':          null,
-  'Pull-Ups':                null,
-  'Bicep Curls':             null,
-  'Tricep Pushdowns':        null,
-  'Calf Raises':             null,
-  'Incline Dumbbell Press':  null,
-  'Lateral Raises':          null,
-  'Tricep Dips':             null,
-  'Cable Flys':              null,
-  'Deadlift':                null,
-  'Cable Rows':              null,
-  'Face Pulls':              null,
-  'Barbell Curls':           null,
-  'Hammer Curls':            null,
-  'Front Squat':             null,
-  'Nordic Curls':            null,
+  // 'Incline Bench':           require('./assets/exercises/incline-bench.jpg'),
+  // 'Seated Cable Fly':        require('./assets/exercises/seated-cable-fly.jpg'),
+  // 'Weighted Pull Ups':       require('./assets/exercises/weighted-pull-ups.jpg'),
+  // 'Cable Lateral Raise':     require('./assets/exercises/cable-lateral-raise.jpg'),
+  // 'Deficit Pendlay Row':     require('./assets/exercises/deficit-pendlay-row.jpg'),
+  // 'Barbell Hip Thrust':      require('./assets/exercises/barbell-hip-thrusts.jpg'),
+  // 'Bulgarian Split Squat':   require('./assets/exercises/bulgarian-split-squat.jpg'),
+  // 'Bench Press':             require('./assets/exercises/bench-press.jpg'),
+  // 'Machine Shoulder Press':  require('./assets/exercises/shoulder-press.jpg'),
+  // 'Pec Deck':                require('./assets/exercises/pec-deck.jpg'),
+  // 'Overhead Extension':      require('./assets/exercises/Overhead Extension.jpg'),
+  // 'Cable Kickback':          require('./assets/exercises/cable-kickbacks.jpg'),
+  // 'Close Grip Lat Pulldown': require('./assets/exercises/close-grip-lat-pulldown.jpg'),
+  // 'Chest-Supported Row':     require('./assets/exercises/chest-supported-row.jpg'),
+  // 'Close-Grip Cable Row':    require('./assets/exercises/close-grip-cable-row.jpg'),
+  // 'Reverse Cable Flyes':     require('./assets/exercises/reverse-cable-flyes.jpg'),
+  // 'EZ-Bar Curl':             require('./assets/exercises/ez-bar-curl.jpg'),
+  // 'Machine Preacher Curl':   require('./assets/exercises/machine-preacher-curl.jpg'),
+  // 'Shrugs':                  require('./assets/exercises/shrugs.jpg'),
+  // 'Seated Leg Curl':         require('./assets/exercises/seated-leg-curl.jpg'),
+  // 'Hip Adduction':           require('./assets/exercises/hip-adduction.jpg'),
+  // 'Linear Hack Squat':       require('./assets/exercises/linear-hack-squat.jpg'),
+  // 'Back Squat':              require('./assets/exercises/back-squat.jpg'),
+  // 'Romanian Deadlift':       require('./assets/exercises/romanian-deadlift.jpg'),
+  // 'Leg Press':               require('./assets/exercises/leg-press.jpg'),
+  // 'Leg Extension':           require('./assets/exercises/leg-extension.jpg'),
+  // 'Leg Extensions':          require('./assets/exercises/leg-extension.jpg'),
+  // 'Hip Abduction':           require('./assets/exercises/hip-abduction.jpg'),
+  // 'Standing Calf Raise':     require('./assets/exercises/standing-calf-raise.jpg'),
+  // 'Lying Leg Curl':          require('./assets/exercises/lying-leg-curl.jpg'),
+  // 'Walking Lunges':          require('./assets/exercises/walking-lunges.jpg'),
+  // 'Rear Delt Machine Fly':   require('./assets/exercises/rear-delt-machine-fly.jpg'),
+  // 'Lat Pulldown':            require('./assets/exercises/lat-pulldown.jpg'),
+  // 'Seated Cable Row':        require('./assets/exercises/seated-cable-row.jpg'),
+  // 'Dumbbell Shoulder Press': require('./assets/exercises/dumbell-shoulder-press.jpg'),
 };
+
+// Maps app exercise names to their exact DB name + optional image index (default 0)
+const EXERCISE_DB_ALIASES = {
+  'Pec Deck':                    { name: 'butterfly', index: 1 },
+  'Seated Lateral Raise':   { name: 'seated side lateral raise', index: 0 },
+  'Barbell Back Squat':          { name: 'barbell full squat', index: 0 },
+  'Lying Leg Curl':              { name: 'lying leg curls', index: 0 },
+  'Seated Calf Raise':           { name: 'seated calf raise', index: 0 },
+  'Bent Over Barbell Row':       { name: 'bent over barbell row', index: 0 },
+  'Cable Tricep Pushdowns':      { name: 'reverse grip triceps pushdown', index: 0 },
+};
+
+function parseSetsReps(name) {
+  const match = name.match(/(\d+)[×xX](\d+(?:-\d+)?)/);
+  if (!match) return null;
+  return { sets: match[1], reps: match[2] };
+}
 
 function cleanExerciseName(name) {
   return name
@@ -193,10 +206,45 @@ function getExerciseEmoji(name) {
   return '🏋️';
 }
 
-function ExerciseImage({ exerciseName }) {
+const EXERCISE_DB_BASE = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/';
+
+function ExerciseImage({ exerciseName, exerciseDbImages = {} }) {
   const [enlarged, setEnlarged] = useState(false);
+  const [remoteAspectRatio, setRemoteAspectRatio] = useState(4 / 3);
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
-  const source = EXERCISE_IMAGES[cleanExerciseName(exerciseName)] ?? null;
+
+  const clean = cleanExerciseName(exerciseName);
+  const localSource = EXERCISE_IMAGES[clean] ?? null;
+
+  const dbKey = clean.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
+  function pickUrl(urls, index = 0) {
+    if (!urls) return null;
+    if (Array.isArray(urls)) return urls[index] ?? urls[0] ?? null;
+    return urls;
+  }
+
+  let remoteUri = null;
+  if (!localSource && Object.keys(exerciseDbImages).length > 0) {
+    // 0. Explicit alias override (e.g. "Pec Deck (Butterfly)" → { name: 'butterfly', index: 1 })
+    const alias = EXERCISE_DB_ALIASES[clean];
+    if (alias) remoteUri = pickUrl(exerciseDbImages[alias.name], alias.index);
+    // 1. Exact or pre-built substring match (e.g. "bench press" in DB)
+    if (!remoteUri) remoteUri = pickUrl(exerciseDbImages[dbKey]);
+    // 2. Reverse contains: find a DB key that our name contains (e.g. "cable fly" inside "seated cable fly")
+    if (!remoteUri) {
+      const match = Object.keys(exerciseDbImages).find(k => k.split(' ').length >= 2 && dbKey.includes(k));
+      if (match) remoteUri = pickUrl(exerciseDbImages[match]);
+    }
+  }
+
+  const source = localSource || (remoteUri ? { uri: remoteUri } : null);
+
+  useEffect(() => {
+    if (remoteUri) {
+      Image.getSize(remoteUri, (w, h) => { if (w && h) setRemoteAspectRatio(w / h); }, () => {});
+    }
+  }, [remoteUri]);
+
   if (!source) {
     return (
       <View style={styles.exImgBox}>
@@ -204,16 +252,26 @@ function ExerciseImage({ exerciseName }) {
       </View>
     );
   }
-  const clean = cleanExerciseName(exerciseName);
-  const info = Image.resolveAssetSource(source);
-  const aspectRatio = info && info.width && info.height ? info.width / info.height : 4 / 3;
+
+  let aspectRatio = remoteUri ? remoteAspectRatio : 4 / 3;
+  if (localSource) {
+    const info = Image.resolveAssetSource(localSource);
+    aspectRatio = info && info.width && info.height ? info.width / info.height : 4 / 3;
+  }
   const cardWidth = screenWidth - 40;
   const maxImgHeight = screenHeight * 0.65;
   const imgHeight = Math.min(cardWidth / aspectRatio, maxImgHeight);
+
   return (
     <>
       <TouchableOpacity onPress={() => setEnlarged(true)}>
-        <Image source={source} style={styles.exImg} resizeMode="cover" />
+        {(clean === 'Weighted Pull Ups' || clean === 'Machine Shoulder Press') ? (
+          <View style={{ width: 140, height: 90, borderRadius: 8, overflow: 'hidden' }}>
+            <Image source={source} style={{ width: 140, height: 180 }} resizeMode="cover" />
+          </View>
+        ) : (
+          <Image source={source} style={styles.exImg} resizeMode="cover" />
+        )}
       </TouchableOpacity>
       <Modal visible={enlarged} transparent animationType="fade">
         <TouchableOpacity style={styles.imgModalOverlay} onPress={() => setEnlarged(false)} activeOpacity={1}>
@@ -341,16 +399,129 @@ export default function Root() {
   const [nutritionForm, setNutritionForm] = useState({ age: '', gender: '', heightFt: '', heightIn: '', weight: '', activityLevel: '' });
   const [nutritionResult, setNutritionResult] = useState(null);
   const [stretchImgModal, setStretchImgModal] = useState(null);
+  const [user, setUser] = useState(null);
+  const [authForm, setAuthForm] = useState({ name: '', email: '', password: '', gender: '' });
+  const [authError, setAuthError] = useState('');
+  const [exerciseDbImages, setExerciseDbImages] = useState({});
 
   useEffect(() => {
-    AsyncStorage.getItem('logs').then(val => {
-      if (val) setLogs(JSON.parse(val));
+    Promise.all([
+      AsyncStorage.getItem('logs'),
+      AsyncStorage.getItem('user'),
+    ]).then(([logsVal, userVal]) => {
+      if (logsVal) setLogs(JSON.parse(logsVal));
+      if (userVal) {
+        const savedUser = JSON.parse(userVal);
+        setUser(savedUser);
+        setAnswers({ name: savedUser.name });
+        setScreen('login');
+      } else {
+        setScreen('register');
+      }
     });
   }, []);
 
   useEffect(() => {
     AsyncStorage.setItem('logs', JSON.stringify(logs));
   }, [logs]);
+
+  useEffect(() => {
+    const CACHE_KEY = 'exerciseDbCache';
+    const CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+    function buildMap(data) {
+      const exact = {};
+      const entries = [];
+      data.forEach(ex => {
+        const key = ex.name.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
+        if (ex.images && ex.images.length > 0) {
+          const urls = ex.images.map(img => EXERCISE_DB_BASE + img);
+          exact[key] = urls;
+          entries.push({ key, urls });
+        }
+      });
+      const map = { ...exact };
+      entries.forEach(({ key, urls }) => {
+        const words = key.split(' ');
+        words.forEach((_, i) => {
+          for (let len = words.length; len >= 2; len--) {
+            const sub = words.slice(i, i + len).join(' ');
+            if (!map[sub]) map[sub] = urls;
+          }
+        });
+      });
+      return map;
+    }
+
+    AsyncStorage.getItem(CACHE_KEY).then(cached => {
+      if (cached) {
+        const { timestamp, map } = JSON.parse(cached);
+        if (Date.now() - timestamp < CACHE_TTL) {
+          setExerciseDbImages(map);
+          return;
+        }
+      }
+      fetch('https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/dist/exercises.json')
+        .then(r => r.json())
+        .then(data => {
+          const map = buildMap(data);
+          setExerciseDbImages(map);
+          AsyncStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: Date.now(), map }));
+        })
+        .catch(() => {});
+    });
+  }, []);
+
+  function handleRegister() {
+    const { name, email, password, gender } = authForm;
+    if (!name || !email || !password || !gender) {
+      setAuthError('Please fill in all fields.');
+      return;
+    }
+    if (!email.includes('@')) {
+      setAuthError('Please enter a valid email.');
+      return;
+    }
+    if (password.length < 6) {
+      setAuthError('Password must be at least 6 characters.');
+      return;
+    }
+    const newUser = { name, email, password, gender };
+    AsyncStorage.setItem('user', JSON.stringify(newUser));
+    setUser(newUser);
+    setAnswers({ name });
+    setAuthError('');
+    setScreen('quiz');
+  }
+
+  function handleLogin() {
+    const { email, password } = authForm;
+    if (!email || !password) {
+      setAuthError('Please enter your email and password.');
+      return;
+    }
+    AsyncStorage.getItem('user').then(val => {
+      if (!val) { setAuthError('No account found. Please register.'); return; }
+      const saved = JSON.parse(val);
+      if (saved.email !== email || saved.password !== password) {
+        setAuthError('Incorrect email or password.');
+        return;
+      }
+      setUser(saved);
+      setAnswers({ name: saved.name });
+      setAuthError('');
+      setScreen('quiz');
+    });
+  }
+
+  function handleLogout() {
+    setUser(null);
+    setAuthForm({ name: '', email: '', password: '', gender: '' });
+    setAuthError('');
+    setPlan(null);
+    setAnswers({});
+    setScreen('login');
+  }
 
   function logKey(dayTitle, exercise) {
     return `${dayTitle}|${exercise}`;
@@ -362,13 +533,19 @@ export default function Root() {
     setAnswers(updated);
     setTextVal('');
 
-    if (key === 'goal' && value === 'Nutrition Plan') {
+    if (key === 'goal' && value === 'Get a Nutrition Plan') {
       setScreen('nutrition');
       return;
     }
 
     if (key === 'goal' && (value === 'Building Muscle - Men' || value === 'Building Muscle - Women')) {
       setPlan(WORKOUT_PLANS[value]);
+      AsyncStorage.getItem('user').then(val => {
+        if (val) {
+          const saved = JSON.parse(val);
+          AsyncStorage.setItem('user', JSON.stringify({ ...saved, goal: value }));
+        }
+      });
       setScreen('plan');
       return;
     }
@@ -415,49 +592,166 @@ export default function Root() {
 
   const question = QUESTIONS[step];
 
+  function LogoutBtn() {
+    return (
+      <TouchableOpacity onPress={handleLogout} style={[styles.backBtn, { alignSelf: 'flex-end' }]}>
+        <Text style={[styles.backText, { color: '#ff6b6b' }]}>Log Out</Text>
+      </TouchableOpacity>
+    );
+  }
+
+  // ── Register Screen ───────────────────────────────────────
+  if (screen === 'register') {
+    return (
+      <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }} keyboardShouldPersistTaps="handled">
+          <Text style={styles.title}>Create Account</Text>
+          <Text style={styles.subtitle}>Start tracking your workouts</Text>
+          <View style={styles.questionCard}>
+            <TextInput
+              style={styles.input}
+              placeholder="Full Name"
+              placeholderTextColor={COLORS.muted}
+              value={authForm.name}
+              onChangeText={v => setAuthForm(f => ({ ...f, name: v }))}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Email"
+              placeholderTextColor={COLORS.muted}
+              value={authForm.email}
+              onChangeText={v => setAuthForm(f => ({ ...f, email: v }))}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Password"
+              placeholderTextColor={COLORS.muted}
+              value={authForm.password}
+              onChangeText={v => setAuthForm(f => ({ ...f, password: v }))}
+              secureTextEntry
+            />
+            <Text style={[styles.questionText, { fontSize: 15, marginTop: 8 }]}>Gender</Text>
+            <View style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}>
+              {['Male', 'Female'].map(g => (
+                <TouchableOpacity
+                  key={g}
+                  style={[styles.button, { flex: 1, backgroundColor: authForm.gender === g ? COLORS.accent : COLORS.input }]}
+                  onPress={() => setAuthForm(f => ({ ...f, gender: g }))}
+                >
+                  <Text style={styles.buttonText}>{g}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            {authError ? <Text style={styles.authError}>{authError}</Text> : null}
+            <TouchableOpacity style={styles.button} onPress={handleRegister}>
+              <Text style={styles.buttonText}>Create Account</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => { setAuthError(''); setScreen('login'); }} style={{ marginTop: 16, alignItems: 'center' }}>
+              <Text style={{ color: COLORS.muted }}>Already have an account? <Text style={{ color: COLORS.accent }}>Log in</Text></Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    );
+  }
+
+  // ── Login Screen ──────────────────────────────────────────
+  if (screen === 'login') {
+    return (
+      <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }} keyboardShouldPersistTaps="handled">
+          <Text style={styles.title}>Welcome Back</Text>
+          <Text style={styles.subtitle}>Log in to your account</Text>
+          <View style={styles.questionCard}>
+            <TextInput
+              style={styles.input}
+              placeholder="Email"
+              placeholderTextColor={COLORS.muted}
+              value={authForm.email}
+              onChangeText={v => setAuthForm(f => ({ ...f, email: v }))}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Password"
+              placeholderTextColor={COLORS.muted}
+              value={authForm.password}
+              onChangeText={v => setAuthForm(f => ({ ...f, password: v }))}
+              secureTextEntry
+            />
+            {authError ? <Text style={styles.authError}>{authError}</Text> : null}
+            <TouchableOpacity style={styles.button} onPress={handleLogin}>
+              <Text style={styles.buttonText}>Log In</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => { setAuthError(''); setScreen('register'); }} style={{ marginTop: 16, alignItems: 'center' }}>
+              <Text style={{ color: COLORS.muted }}>Don't have an account? <Text style={{ color: COLORS.accent }}>Register</Text></Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    );
+  }
+
   // ── Quiz Screen ──────────────────────────────────────────
   if (screen === 'quiz') {
     return (
       <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        {step > 0 && (
-          <TouchableOpacity onPress={() => setStep(step - 1)} style={styles.backBtn}>
-            <Text style={styles.backText}>‹ Back</Text>
-          </TouchableOpacity>
-        )}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+          {step > 0 ? (
+            <TouchableOpacity onPress={() => setStep(step - 1)} style={styles.backBtn}>
+              <Text style={styles.backText}>‹ Back</Text>
+            </TouchableOpacity>
+          ) : <View />}
+          <LogoutBtn />
+        </View>
         <Text style={styles.title}>Workout Tracker</Text>
         <View style={styles.progress}>
           {QUESTIONS.map((_, i) => (
             <View key={i} style={[styles.dot, i === step && styles.dotActive, i < step && styles.dotDone]} />
           ))}
         </View>
-        <View style={styles.questionCard}>
-          <Text style={styles.questionText}>{question.label}</Text>
-          {question.type === 'text' && (
-            <>
-              <TextInput
-                style={styles.input}
-                placeholder={question.placeholder}
-                placeholderTextColor={COLORS.muted}
-                value={textVal}
-                onChangeText={setTextVal}
-                returnKeyType="next"
-                autoFocus
-              />
-              <TouchableOpacity style={styles.button} onPress={() => { if (textVal.trim()) handleAnswer(textVal.trim()); }}>
-                <Text style={styles.buttonText}>Next</Text>
-              </TouchableOpacity>
-            </>
-          )}
-          {question.type === 'choice' && (
-            <View style={styles.choices}>
-              {question.options.map(opt => (
-                <TouchableOpacity key={opt} style={styles.choiceBtn} onPress={() => handleAnswer(opt)}>
-                  <Text style={styles.choiceText}>{opt}</Text>
+        <Text style={styles.questionText}>{question.label}</Text>
+        {question.type === 'text' && (
+          <View style={styles.questionCard}>
+            <TextInput
+              style={styles.input}
+              placeholder={question.placeholder}
+              placeholderTextColor={COLORS.muted}
+              value={textVal}
+              onChangeText={setTextVal}
+              returnKeyType="next"
+              autoFocus
+            />
+            <TouchableOpacity style={styles.button} onPress={() => { if (textVal.trim()) handleAnswer(textVal.trim()); }}>
+              <Text style={styles.buttonText}>Next</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+        {question.type === 'choice' && (
+          <View style={styles.choices}>
+            {question.options.filter(opt => {
+              if (opt === 'Building Muscle - Men' && user?.gender === 'Female') return false;
+              if (opt === 'Building Muscle - Women' && user?.gender === 'Male') return false;
+              return true;
+            }).map(opt => {
+              const meta = GOAL_META[opt];
+              const label = opt.startsWith('Building Muscle') ? 'Build Muscle' : opt;
+              return (
+                <TouchableOpacity key={opt} style={styles.goalCard} onPress={() => handleAnswer(opt)}>
+                  <Text style={styles.goalEmoji}>{meta?.emoji}</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.goalTitle}>{label}</Text>
+                    <Text style={styles.goalSubtitle}>{meta?.subtitle}</Text>
+                  </View>
+                  <Text style={styles.goalChevron}>›</Text>
                 </TouchableOpacity>
-              ))}
-            </View>
-          )}
-        </View>
+              );
+            })}
+          </View>
+        )}
       </KeyboardAvoidingView>
     );
   }
@@ -469,9 +763,12 @@ export default function Root() {
     return (
       <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
-          <TouchableOpacity onPress={() => { setStep(1); setScreen('quiz'); }} style={styles.backBtn}>
-            <Text style={styles.backText}>‹ Back</Text>
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <TouchableOpacity onPress={() => { setStep(0); setScreen('quiz'); }} style={styles.backBtn}>
+              <Text style={styles.backText}>‹ Back</Text>
+            </TouchableOpacity>
+            <LogoutBtn />
+          </View>
           <Text style={styles.title}>Nutrition Plan</Text>
           <Text style={styles.subtitle}>Tell us about yourself</Text>
 
@@ -552,9 +849,12 @@ export default function Root() {
     return (
       <View style={styles.container}>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
-          <TouchableOpacity onPress={() => setScreen('nutrition')} style={styles.backBtn}>
-            <Text style={styles.backText}>‹ Back</Text>
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <TouchableOpacity onPress={() => setScreen('nutrition')} style={styles.backBtn}>
+              <Text style={styles.backText}>‹ Back</Text>
+            </TouchableOpacity>
+            <LogoutBtn />
+          </View>
           <Text style={styles.title}>Your Nutrition Plan</Text>
           <Text style={styles.subtitle}>{answers.name} · {nutritionForm.weight} lbs · {nutritionForm.activityLevel}</Text>
 
@@ -624,11 +924,15 @@ export default function Root() {
   if (screen === 'plan') {
     return (
       <View style={styles.container}>
-        <TouchableOpacity onPress={restart} style={styles.backBtn}>
-          <Text style={styles.backText}>‹ Back</Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+          <TouchableOpacity onPress={restart} style={styles.backBtn}>
+            <Text style={styles.backText}>‹ Back</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleLogout} style={styles.backBtn}>
+            <Text style={[styles.backText, { color: '#ff6b6b' }]}>Log Out</Text>
+          </TouchableOpacity>
+        </View>
         <Text style={styles.title}>Your Workout Plan</Text>
-        <Text style={styles.subtitle}>{`${answers.name}'s ${answers.goal} Plan`}</Text>
         <FlatList
           data={plan}
           keyExtractor={(_, i) => i.toString()}
@@ -650,9 +954,12 @@ export default function Root() {
   if (screen === 'day') {
     return (
       <View style={styles.container}>
-        <TouchableOpacity onPress={() => setScreen('plan')} style={styles.backBtn}>
-          <Text style={styles.backText}>‹ Back to Plan</Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+          <TouchableOpacity onPress={() => setScreen('plan')} style={styles.backBtn}>
+            <Text style={styles.backText}>‹ Back to Plan</Text>
+          </TouchableOpacity>
+          <LogoutBtn />
+        </View>
         <Text style={styles.title}>{selectedDay.day}</Text>
         <FlatList
           data={selectedDay.exercises}
@@ -681,9 +988,15 @@ export default function Root() {
             return (
               <View style={styles.exerciseCard}>
                 <View style={[styles.exerciseCardTop, (isStretching || isFoamRolling) && { justifyContent: 'center' }]}>
-                  {!isStretching && !isFoamRolling && <ExerciseImage exerciseName={item} />}
+                  {!isStretching && !isFoamRolling && <ExerciseImage exerciseName={item} exerciseDbImages={exerciseDbImages} />}
                   <View style={[styles.exerciseCardInfo, (isStretching || isFoamRolling) && { alignItems: 'center' }]}>
-                    <Text style={styles.exerciseName}>{item}</Text>
+                    <Text style={styles.exerciseName}>{cleanExerciseName(item)}</Text>
+                    {(() => { const sr = parseSetsReps(item); return sr ? (
+                      <View style={styles.pillRow}>
+                        <View style={styles.pill}><Text style={styles.pillText}>{sr.sets} sets</Text></View>
+                        <View style={styles.pill}><Text style={styles.pillText}>{sr.reps} reps</Text></View>
+                      </View>
+                    ) : null; })()}
                     {!selectedDay.day.includes('Rest') && (
                       <Text style={styles.logCount}>
                         {entryCount > 0 ? `${entryCount} week${entryCount > 1 ? 's' : ''} logged` : 'No logs yet'}
@@ -767,14 +1080,17 @@ export default function Root() {
 
     return (
       <View style={styles.container}>
-        <TouchableOpacity onPress={() => setScreen('day')} style={styles.backBtn}>
-          <Text style={styles.backText}>‹ Back to {selectedDay.day.split(' – ')[0]}</Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+          <TouchableOpacity onPress={() => setScreen('day')} style={styles.backBtn}>
+            <Text style={styles.backText}>‹ Back to {selectedDay.day.split(' – ')[0]}</Text>
+          </TouchableOpacity>
+          <LogoutBtn />
+        </View>
 
         <ScrollView contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
           {/* Header */}
           <View style={styles.progressHeader}>
-            <ExerciseImage exerciseName={selectedExercise} />
+            <ExerciseImage exerciseName={selectedExercise} exerciseDbImages={exerciseDbImages} />
             <View style={{ flex: 1 }}>
               <Text style={styles.title2}>{selectedExercise.replace(/\s*\d+[×xX]\d+\s*/g, '').trim()}</Text>
               <Text style={styles.subtitle2}>{selectedDay.day}</Text>
@@ -898,9 +1214,10 @@ const styles = StyleSheet.create({
   },
   questionText: {
     color: COLORS.text,
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
+    textAlign: 'left',
   },
   input: {
     backgroundColor: COLORS.input,
@@ -917,6 +1234,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   buttonText: { color: COLORS.text, fontSize: 16, fontWeight: 'bold' },
+  authError: { color: '#ff6b6b', fontSize: 13, marginBottom: 12, textAlign: 'center' },
   choices: { gap: 10 },
   choiceBtn: {
     backgroundColor: COLORS.input,
@@ -928,6 +1246,11 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.accent,
   },
   choiceText: { color: COLORS.text, fontSize: 16 },
+  goalCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.card, borderRadius: 14, padding: 16, gap: 14 },
+  goalEmoji: { fontSize: 32 },
+  goalTitle: { color: COLORS.text, fontSize: 17, fontWeight: 'bold' },
+  goalSubtitle: { color: COLORS.muted, fontSize: 13, marginTop: 2 },
+  goalChevron: { color: COLORS.muted, fontSize: 22, fontWeight: 'bold' },
   fieldLabel: { color: COLORS.muted, fontSize: 13, fontWeight: '600', marginBottom: 6, marginTop: 4 },
   mealFood: { color: COLORS.muted, fontSize: 13, marginTop: 4, paddingLeft: 4 },
   card: {
@@ -957,9 +1280,9 @@ const styles = StyleSheet.create({
   stretchLabel: { color: COLORS.text, fontSize: 13, fontWeight: '600' },
   stretchDuration: { color: COLORS.muted, fontSize: 11 },
   exerciseCardInfo: { flex: 1 },
-  exImgBox: { width: 150, height: 90, borderRadius: 8, backgroundColor: COLORS.input, justifyContent: 'center', alignItems: 'center' },
+  exImgBox: { width: 140, height: 90, borderRadius: 8, backgroundColor: COLORS.input, justifyContent: 'center', alignItems: 'center' },
   exImgEmoji: { fontSize: 36 },
-  exImg: { width: 150, height: 90, borderRadius: 8, overflow: 'hidden' },
+  exImg: { width: 140, height: 90, borderRadius: 8, overflow: 'hidden' },
   progressImgRow: { alignItems: 'center', marginBottom: 16 },
   progressHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16 },
   title2: { fontSize: 18, fontWeight: 'bold', color: COLORS.text },
@@ -976,7 +1299,10 @@ const styles = StyleSheet.create({
   dateCol: { flex: 1, textAlign: 'right' },
   weightValue: { fontWeight: 'bold', color: COLORS.text },
   entryNum: { color: COLORS.muted, fontSize: 11 },
-  exerciseName: { color: COLORS.text, fontSize: 15, fontWeight: 'bold', marginBottom: 4 },
+  exerciseName: { color: COLORS.text, fontSize: 15, fontWeight: 'bold', marginBottom: 2 },
+  pillRow: { flexDirection: 'row', gap: 4, marginBottom: 4 },
+  pill: { backgroundColor: '#3a3a6a', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 3 },
+  pillText: { color: '#d0d0f0', fontSize: 11, fontWeight: '600' },
   logCount: { color: COLORS.muted, fontSize: 12, marginBottom: 10 },
   exerciseBtns: { flexDirection: 'row', gap: 8 },
   logBtn: {
