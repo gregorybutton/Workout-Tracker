@@ -87,14 +87,14 @@ const WORKOUT_PLANS = {
 
 
 const QUESTIONS = [
-  { key: 'goal', label: "What's your goal?", type: 'choice', options: ['Building Muscle - Men', 'Building Muscle - Women', 'Get a Nutrition Plan'] },
+  { key: 'goal', label: "What's your goal?", type: 'choice', options: ['Building Muscle - Men', 'Building Muscle - Women', 'Get Your Nutrition Plan'] },
 ];
 
 
 const GOAL_META = {
   'Building Muscle - Men':   { icon: 'M', iconColor: '#ff6b6b', iconGradient: ['#e63946', '#7b1fa2'], subtitle: 'Track workouts' },
   'Building Muscle - Women': { icon: 'M', iconColor: '#ff6b6b', iconGradient: ['#e63946', '#7b1fa2'], subtitle: 'Track workouts' },
-  'Get a Nutrition Plan':    { icon: 'N', iconColor: '#69f0ae', iconGradient: ['#2ecc71', '#0097a7'], subtitle: 'Calculate calories' },
+  'Get Your Nutrition Plan':    { icon: 'N', iconColor: '#69f0ae', iconGradient: ['#2ecc71', '#0097a7'], subtitle: 'Calculate calories' },
 };
 
 const EXERCISE_NOTES = {
@@ -990,7 +990,7 @@ function Root() {
   const [profileForm, setProfileForm] = useState({
     gender: '', age: '', weightLbs: '', heightFt: '', heightIn: '',
     bodyFatPct: '', chest: '', waist: '', hips: '', arms: '', thighs: '',
-    primaryGoal: '', trainingDays: '', fitnessLevel: '', sleepQuality: '', dailyCalories: '',
+    primaryGoal: '', trainingDays: '', fitnessLevel: '', activityLevel: '', sleepQuality: '',
   });
   const [processingStep, setProcessingStep] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
@@ -1044,6 +1044,7 @@ function Root() {
           }
           setCompletedWorkouts(validated);
           if (data.restTimerEnabled !== undefined) setRestTimerEnabled(data.restTimerEnabled);
+          if (data.profile) setProfileForm(f => ({ ...f, ...data.profile }));
         }
       } catch (e) {}
       setScreen('login');
@@ -1234,6 +1235,7 @@ function Root() {
       setCurrentWeek(1);
       setAnswers({ name: found.name });
       setAuthError('');
+      if (found.profile) setProfileForm(f => ({ ...f, ...found.profile }));
       const foundLogs = found.logs || {};
       setLogs(foundLogs);
       const completedRaw = found.completedWorkouts || {};
@@ -1291,8 +1293,27 @@ function Root() {
     setAnswers(updated);
     setTextVal('');
 
-    if (key === 'goal' && value === 'Get a Nutrition Plan') {
-      setScreen('nutrition');
+    if (key === 'goal' && value === 'Get Your Nutrition Plan') {
+      const pf = profileForm;
+      const age = pf.age;
+      const gender = pf.gender || user?.gender;
+      const heightFt = pf.heightFt;
+      const heightIn = pf.heightIn || '0';
+      const weight = pf.weightLbs;
+      const activityLevel = pf.activityLevel || 'Moderately Active';
+      if (age && gender && heightFt && weight) {
+        const tdee = calculateTDEE(age, gender, heightFt, heightIn, weight, activityLevel);
+        const goalAdj = { 'Build Muscle': 300, 'Lose Fat': -500, 'Recomp': 0, 'Get Stronger': 150 };
+        const adj = goalAdj[pf.primaryGoal] ?? 0;
+        const cut = tdee - 500;
+        const bulk = tdee + 300;
+        const target = tdee + adj;
+        const proteinG = Math.round(parseFloat(weight));
+        setNutritionResult({ tdee, cut, bulk, target, proteinG, weight: parseFloat(weight) });
+        setScreen('nutritionResults');
+      } else {
+        setScreen('nutrition');
+      }
       return;
     }
 
@@ -2101,6 +2122,26 @@ function Root() {
                   </TouchableOpacity>
                 ))}
               </View>
+
+              <Text style={labelStyle}>ACTIVITY LEVEL</Text>
+              <View style={{ gap: 8, marginBottom: 16 }}>
+                {[
+                  { val: 'Sedentary', sub: 'Little to no exercise' },
+                  { val: 'Lightly Active', sub: 'Light exercise 1–3 days/week' },
+                  { val: 'Moderately Active', sub: 'Moderate exercise 3–5 days/week' },
+                  { val: 'Very Active', sub: 'Hard exercise 6–7 days/week' },
+                ].map(({ val, sub }) => (
+                  <TouchableOpacity key={val} onPress={() => setPF('activityLevel', val)}
+                    style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 14, borderRadius: 12, borderWidth: 1, borderColor: pf.activityLevel === val ? COLORS.accent : '#ffffff15', backgroundColor: pf.activityLevel === val ? COLORS.accent + '20' : '#ffffff08' }}>
+                    <View>
+                      <Text style={{ color: pf.activityLevel === val ? COLORS.accent : COLORS.text, fontWeight: '700', fontSize: 14 }}>{val}</Text>
+                      <Text style={{ color: COLORS.muted, fontSize: 12, marginTop: 2 }}>{sub}</Text>
+                    </View>
+                    {pf.activityLevel === val && <Text style={{ color: COLORS.accent, fontSize: 16 }}>✓</Text>}
+                  </TouchableOpacity>
+                ))}
+              </View>
+
               <Text style={labelStyle}>SLEEP QUALITY</Text>
               <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
                 {['Poor', 'Fair', 'Good', 'Excellent'].map(s => (
@@ -2109,8 +2150,6 @@ function Root() {
                   </TouchableOpacity>
                 ))}
               </View>
-              <Text style={labelStyle}>DAILY CALORIE INTAKE (OPTIONAL)</Text>
-              <TextInput style={inputStyle} placeholder="e.g. 2500" placeholderTextColor={COLORS.muted} keyboardType="numeric" value={pf.dailyCalories} onChangeText={v => setPF('dailyCalories', v)} />
             </>
           )}
 
@@ -2312,7 +2351,7 @@ function Root() {
               return true;
             }).map(opt => {
               const meta = GOAL_META[opt];
-              const label = opt.startsWith('Building Muscle') ? '8 Week Muscle Building Program' : opt;
+              const label = opt === 'Building Muscle - Men' ? "Men's Muscle Building Program\n8 Weeks - 5 Days per Week" : opt === 'Building Muscle - Women' ? "Women's Muscle Building Program\n8 Weeks - 5 Days per Week" : opt;
               const isRecommended = opt.startsWith('Building Muscle');
               return (
                 <AnimatedPress key={opt} style={[styles.goalCard, isRecommended && { borderColor: COLORS.accent + '55', shadowColor: COLORS.accent, shadowOpacity: 0.3, shadowRadius: 16, elevation: 8 }, !isRecommended && { opacity: 0.6 }]} onPress={() => handleAnswer(opt)} scaleDown={0.97}>
@@ -2419,7 +2458,16 @@ function Root() {
 
   // ── Nutrition Results Screen ──────────────────────────────
   if (screen === 'nutritionResults' && nutritionResult) {
-    const { tdee, cut, bulk, proteinG } = nutritionResult;
+    const { tdee, cut, bulk, target, proteinG } = nutritionResult;
+    const goalCalories = target ?? tdee;
+    const pf = profileForm;
+    const primaryGoal = pf.primaryGoal || 'Maintain';
+    const goalLabel = { 'Build Muscle': 'Bulk', 'Lose Fat': 'Cut', 'Recomp': 'Maintain', 'Get Stronger': 'Maintain' }[primaryGoal] || 'Maintain';
+    const displayWeight = pf.weightLbs || nutritionForm.weight;
+    const displayActivity = pf.activityLevel || nutritionForm.activityLevel;
+
+    const fatG = Math.round((goalCalories * 0.25) / 9);
+    const carbG = Math.round((goalCalories - proteinG * 4 - fatG * 9) / 4);
     const fatCutG = Math.round((cut * 0.25) / 9);
     const carbCutG = Math.round((cut - proteinG * 4 - fatCutG * 9) / 4);
     const fatBulkG = Math.round((bulk * 0.25) / 9);
@@ -2441,50 +2489,61 @@ function Root() {
         <LogoutBtn />
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <TouchableOpacity onPress={() => setScreen('nutrition')} style={styles.backBtn}>
+            <TouchableOpacity onPress={() => setScreen('quiz')} style={styles.backBtn}>
               <Text style={styles.backText}>‹</Text>
             </TouchableOpacity>
           </View>
           <Text style={styles.title}>Your Nutrition Plan</Text>
-          <Text style={styles.subtitle}>{answers.name} · {nutritionForm.weight} lbs · {nutritionForm.activityLevel}</Text>
+          <Text style={styles.subtitle}>{answers.name}{displayWeight ? ` · ${displayWeight} lbs` : ''}{displayActivity ? ` · ${displayActivity}` : ''}</Text>
 
-          {/* TDEE Cards */}
-          <View style={styles.statsRow}>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{tdee}</Text>
-              <Text style={styles.statLabel}>TDEE (kcal)</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={[styles.statValue, { color: COLORS.accent }]}>{cut}</Text>
-              <Text style={styles.statLabel}>Cut (kcal)</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={[styles.statValue, { color: COLORS.success }]}>{bulk}</Text>
-              <Text style={styles.statLabel}>Bulk (kcal)</Text>
+          {/* Goal target card */}
+          <View style={{ backgroundColor: COLORS.accent + '18', borderRadius: 20, padding: 20, marginBottom: 16, borderWidth: 1, borderColor: COLORS.accent + '40', borderTopColor: COLORS.accent + '70' }}>
+            <Text style={{ color: COLORS.muted, fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6 }}>Your Daily Target · {primaryGoal}</Text>
+            <Text style={{ color: COLORS.accent, fontSize: 42, fontWeight: '900', letterSpacing: -1 }}>{goalCalories} <Text style={{ fontSize: 18, fontWeight: '500', color: COLORS.muted }}>kcal</Text></Text>
+            <View style={{ flexDirection: 'row', gap: 20, marginTop: 12 }}>
+              <View>
+                <Text style={{ color: COLORS.muted, fontSize: 11, fontWeight: '700', letterSpacing: 0.8 }}>PROTEIN</Text>
+                <Text style={{ color: COLORS.text, fontSize: 20, fontWeight: '800', marginTop: 2 }}>{proteinG}g</Text>
+              </View>
+              <View>
+                <Text style={{ color: COLORS.muted, fontSize: 11, fontWeight: '700', letterSpacing: 0.8 }}>CARBS</Text>
+                <Text style={{ color: COLORS.text, fontSize: 20, fontWeight: '800', marginTop: 2 }}>{carbG}g</Text>
+              </View>
+              <View>
+                <Text style={{ color: COLORS.muted, fontSize: 11, fontWeight: '700', letterSpacing: 0.8 }}>FAT</Text>
+                <Text style={{ color: COLORS.text, fontSize: 20, fontWeight: '800', marginTop: 2 }}>{fatG}g</Text>
+              </View>
+              <View>
+                <Text style={{ color: COLORS.muted, fontSize: 11, fontWeight: '700', letterSpacing: 0.8 }}>TDEE</Text>
+                <Text style={{ color: COLORS.muted, fontSize: 20, fontWeight: '800', marginTop: 2 }}>{tdee}</Text>
+              </View>
             </View>
           </View>
 
-          {/* Macros Table */}
+          {/* All scenarios macros table */}
           <View style={styles.chartContainer}>
             <Text style={styles.chartTitle}>Daily Macros Breakdown</Text>
             <View style={[styles.tableRow, styles.tableHeaderRow]}>
-              <Text style={[styles.tableCell, styles.tableHeaderCell, { flex: 2, textAlign: 'left' }]}>Goal</Text>
+              <Text style={[styles.tableCell, styles.tableHeaderCell, { flex: 2, textAlign: 'left' }]}>Scenario</Text>
               <Text style={[styles.tableCell, styles.tableHeaderCell, { flex: 2 }]}>Protein</Text>
               <Text style={[styles.tableCell, styles.tableHeaderCell, { flex: 2 }]}>Carbs</Text>
               <Text style={[styles.tableCell, styles.tableHeaderCell, { flex: 2 }]}>Fat</Text>
             </View>
             {[
-              { label: 'Maintain', protein: proteinG, carbs: carbMainG, fat: fatMainG },
-              { label: 'Cut', protein: proteinG, carbs: carbCutG, fat: fatCutG },
-              { label: 'Bulk', protein: proteinG, carbs: carbBulkG, fat: fatBulkG },
-            ].map((row, i) => (
-              <View key={i} style={[styles.tableRow, i % 2 === 0 && styles.tableRowAlt]}>
-                <Text style={[styles.tableCell, { flex: 2, textAlign: 'left' }]}>{row.label}</Text>
-                <Text style={[styles.tableCell, { flex: 2, color: COLORS.accent }]}>{row.protein}g</Text>
-                <Text style={[styles.tableCell, { flex: 2 }]}>{row.carbs}g</Text>
-                <Text style={[styles.tableCell, { flex: 2 }]}>{row.fat}g</Text>
-              </View>
-            ))}
+              { label: 'Maintain', kcal: tdee, protein: proteinG, carbs: carbMainG, fat: fatMainG },
+              { label: 'Cut', kcal: cut, protein: proteinG, carbs: carbCutG, fat: fatCutG },
+              { label: 'Bulk', kcal: bulk, protein: proteinG, carbs: carbBulkG, fat: fatBulkG },
+            ].map((row, i) => {
+              const isGoal = row.label === goalLabel;
+              return (
+                <View key={i} style={[styles.tableRow, i % 2 === 0 && styles.tableRowAlt, isGoal && { backgroundColor: COLORS.accent + '18' }]}>
+                  <Text style={[styles.tableCell, { flex: 2, textAlign: 'left', color: isGoal ? COLORS.accent : COLORS.text, fontWeight: isGoal ? '700' : '400' }]}>{row.label}{isGoal ? ' ★' : ''}</Text>
+                  <Text style={[styles.tableCell, { flex: 2, color: COLORS.accent }]}>{row.protein}g</Text>
+                  <Text style={[styles.tableCell, { flex: 2 }]}>{row.carbs}g</Text>
+                  <Text style={[styles.tableCell, { flex: 2 }]}>{row.fat}g</Text>
+                </View>
+              );
+            })}
           </View>
 
           {/* Meal Plan */}
@@ -2493,7 +2552,7 @@ function Root() {
             <View key={i} style={styles.card}>
               <View style={styles.cardRow}>
                 <Text style={styles.dayTitle}>{meal.name}</Text>
-                <Text style={styles.exerciseCount}>{Math.round(tdee * meal.pct)} kcal</Text>
+                <Text style={styles.exerciseCount}>{Math.round(goalCalories * meal.pct)} kcal</Text>
               </View>
               {meal.foods.map((f, j) => (
                 <Text key={j} style={styles.mealFood}>· {f}</Text>
@@ -4416,7 +4475,7 @@ const styles = StyleSheet.create({
   choiceText: { color: COLORS.text, fontSize: 16 },
   goalCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.surface, borderRadius: 18, padding: 20, gap: 16, borderWidth: 1, borderColor: '#ffffff08', borderTopColor: '#ffffff35', shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.55, shadowRadius: 18, marginBottom: 0 },
   goalEmoji: { fontSize: 32 },
-  goalTitle: { color: COLORS.text, fontSize: 17, fontWeight: 'bold' },
+  goalTitle: { color: COLORS.text, fontSize: 15, fontWeight: 'bold' },
   goalSubtitle: { color: COLORS.muted, fontSize: 13, marginTop: 2 },
   goalChevron: { color: COLORS.muted, fontSize: 22, fontWeight: 'bold' },
   fieldLabel: { color: COLORS.muted, fontSize: 13, fontWeight: '600', marginBottom: 6, marginTop: 4 },
