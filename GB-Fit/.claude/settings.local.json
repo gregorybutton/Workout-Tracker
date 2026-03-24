@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(node -e \"require\\(''''./App.js''''\\)\")"
+      "Bash(node -e \"require\\(''''./App.js''''\\)\")",
+      "Bash(grep -n \"react-native-svg\\\\|from ''''react-native-svg''''\" App.js)",
+      "Bash(node --input-type=module --eval \"import\\(''''./App.js''''\\)\")",
+      "Bash(npx expo:*)"
     ]
   }
 }
