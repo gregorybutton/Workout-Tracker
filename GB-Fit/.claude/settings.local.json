@@ -4,7 +4,14 @@
       "Bash(node -e \"require\\(''''./App.js''''\\)\")",
       "Bash(grep -n \"react-native-svg\\\\|from ''''react-native-svg''''\" App.js)",
       "Bash(node --input-type=module --eval \"import\\(''''./App.js''''\\)\")",
-      "Bash(npx expo:*)"
+      "Bash(npx expo:*)",
+      "Bash(grep -c \"color: ''#ffffff''\" \"c:/Users/Gbutt/OneDrive/Desktop/Code/GB-Fit/GB-Fit/App.js\")",
+      "Bash(python3 apply_theme.py)",
+      "Read(//c/Windows/**)",
+      "Bash(ls /c/Python*/python.exe)",
+      "Bash(command -v python)",
+      "Bash(/c/Python314/python apply_theme.py)",
+      "Bash(grep -n \"backgroundColor: ''#0c0c1e''\" \"c:/Users/Gbutt/OneDrive/Desktop/Code/GB-Fit/GB-Fit/App.js\")"
     ]
   }
 }

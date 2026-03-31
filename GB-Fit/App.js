@@ -388,7 +388,7 @@ function categorizeExercise(name) {
   if (n.includes('barbell curl') || n.includes('ez bar curl'))            return { base: 'bench',    ratio: 0.28, type: 'accessory' };
   if (n.includes('curl'))                                                  return { base: 'bench',    ratio: 0.18, type: 'accessory' };
   if (n.includes('skull crusher') || n.includes('lying tricep'))          return { base: 'bench',    ratio: 0.25, type: 'accessory' };
-  if (n.includes('tricep') || n.includes('pushdown') || n.includes('press down') || n.includes('kickback')) return { base: 'bench', ratio: 0.22, type: 'accessory' };
+  if (n.includes('tricep') || n.includes('pushdown') || n.includes('press down') || n.includes('kickback') || n.includes('overhead extension') || n.includes('overhead tricep')) return { base: 'bench', ratio: 0.22, type: 'accessory' };
   return null;
 }
 
@@ -659,12 +659,14 @@ function AnimatedBmiCard({ bmi }) {
 }
 
 // Progress bar that animates its fill from 0 → target on mount/change
-function AnimatedProgressBar({ progress, color = '#4a90e2', trackColor = '#2a2a4a', height = 8, glowColor, style }) {
-  const widthAnim = useRef(new Animated.Value(Math.min(Math.max(progress, 0), 1))).current;
+function AnimatedProgressBar({ progress, color = '#4a90e2', trackColor = '#2a2a4a', height = 8, glowColor, style, delay = 0 }) {
+  const widthAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     Animated.timing(widthAnim, {
       toValue: Math.min(Math.max(progress, 0), 1),
-      duration: 900,
+      duration: 1100,
+      delay,
+      easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
     }).start();
   }, [progress]);
@@ -749,10 +751,48 @@ function ExpandablePreviewCard({ d, cardAnim, getDayIcon }) {
   );
 }
 
-function DayCard({ item, currentWeek, logs, completedWorkouts, isNext, onPress }) {
+function DayCard({ item, currentWeek, logs, completedWorkouts, isNext, onPress, onSaveNutrition, nutritionData, nutritionGoal, expandedNutKey, setExpandedNutKey, nutKey }) {
   const scale = useRef(new Animated.Value(1)).current;
+  const nextPulse = useRef(new Animated.Value(1)).current;
+  const [calInput, setCalInput] = useState('');
+  const [protInput, setProtInput] = useState('');
+  const [carbInput, setCarbInput] = useState('');
+  const [fatInput, setFatInput] = useState('');
+  const nutExpandAnim = useRef(new Animated.Value(0)).current;
+  const nutExpanded = expandedNutKey === nutKey;
+
+  useEffect(() => {
+    Animated.spring(nutExpandAnim, { toValue: nutExpanded ? 1 : 0, useNativeDriver: false, friction: 9, tension: 55 }).start();
+    if (nutExpanded) {
+      const goalCal = nutritionGoal?.cal ?? 0;
+      const goalProt = nutritionGoal?.prot ?? 0;
+      setCalInput(nutritionData?.calories > 0 ? String(nutritionData.calories) : goalCal > 0 ? String(goalCal) : '');
+      setProtInput(nutritionData?.protein > 0 ? String(nutritionData.protein) : goalProt > 0 ? String(goalProt) : '');
+      setCarbInput(nutritionData?.carbs > 0 ? String(nutritionData.carbs) : '');
+      setFatInput(nutritionData?.fats > 0 ? String(nutritionData.fats) : '');
+    }
+  }, [nutExpanded]);
+
+  const toggleNut = () => {
+    setExpandedNutKey(nutExpanded ? null : nutKey);
+  };
   const pressIn = () => Animated.spring(scale, { toValue: 0.97, useNativeDriver: true, speed: 120, bounciness: 0 }).start();
   const pressOut = () => Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 80, bounciness: 6 }).start();
+
+  useEffect(() => {
+    if (isNext) {
+      const loop = Animated.loop(
+        Animated.sequence([
+          Animated.timing(nextPulse, { toValue: 0.97, duration: 500, easing: Easing.inOut(Easing.cubic), useNativeDriver: true }),
+          Animated.timing(nextPulse, { toValue: 1, duration: 500, easing: Easing.inOut(Easing.cubic), useNativeDriver: true }),
+        ])
+      );
+      loop.start();
+      return () => loop.stop();
+    } else {
+      nextPulse.setValue(1);
+    }
+  }, [isNext]);
 
   const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const todayName = DAY_NAMES[new Date().getDay()];
@@ -766,7 +806,10 @@ function DayCard({ item, currentWeek, logs, completedWorkouts, isNext, onPress }
   const hasAnyLog = !isRestDay && workoutExs.some(e =>
     (logs[logKeyGlobal(item.day, e)] || []).some(en => en.programWeek === currentWeek)
   );
-  const isCompleted = !!completedWorkouts[wKey] && hasAnyLog;
+  const allLogged = !isRestDay && workoutExs.length > 0 && workoutExs.every(e =>
+    (logs[logKeyGlobal(item.day, e)] || []).some(en => en.programWeek === currentWeek)
+  );
+  const isCompleted = !!completedWorkouts[wKey] && allLogged;
   const isStarted = !isRestDay && !isCompleted && workoutExs.some(e =>
     (logs[logKeyGlobal(item.day, e)] || []).some(en => en.programWeek === currentWeek)
   );
@@ -781,8 +824,8 @@ function DayCard({ item, currentWeek, logs, completedWorkouts, isNext, onPress }
   let badge;
   if (isCompleted) {
     badge = (
-      <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#1e3a2a', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#3acd7030' }}>
-        <Text style={{ color: '#5a9070', fontSize: 11, fontWeight: '600', lineHeight: 14 }}>✓</Text>
+      <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#1e3a2a', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#3acd7060' }}>
+        <Text style={{ color: '#7edd9a', fontSize: 11, fontWeight: '700', lineHeight: 14 }}>✓</Text>
       </View>
     );
   } else if (isStarted) {
@@ -811,58 +854,182 @@ function DayCard({ item, currentWeek, logs, completedWorkouts, isNext, onPress }
     badge = <Text style={{ color: COLORS.muted, fontSize: 22, fontWeight: '300', opacity: 0.5 }}>›</Text>;
   }
 
-  const cardBg = isRestDay ? '#181828' : isNext ? '#161b3a' : isToday && !isCompleted ? '#1c1428' : '#1c1c42';
+  const cardBg = isRestDay ? '#3a3a55' : isNext ? '#2a3470' : isToday && !isCompleted ? '#3a2848' : '#343465';
   const cardBorder = isRestDay ? '#ffffff12' : isNext ? '#7b8fff70' : isToday && !isCompleted ? '#e9456020' : '#ffffff08';
   const cardBorderTop = isRestDay ? '#ffffff22' : isNext ? '#7b8fffcc' : isToday && !isCompleted ? '#e9456038' : '#ffffff35';
-  const shadowCol = isNext ? '#7b8fff' : isToday && !isCompleted && !isRestDay ? '#e94560' : '#000';
-  const shadowOp = isNext ? 0.38 : isToday && !isCompleted && !isRestDay ? 0.10 : 0.25;
-  const shadowRadius = isNext ? 16 : 10;
+
+
+  const nutBg = '#0a2218';
+
+
 
   return (
-    <Animated.View style={{ transform: [{ scale }], marginBottom: 19, opacity: isCompleted ? 0.72 : 1 }}>
-      <TouchableOpacity
-        style={{
-          backgroundColor: cardBg,
-          borderWidth: 1,
-          borderColor: cardBorder,
-          borderTopColor: cardBorderTop,
-          borderRadius: 20,
-          flexDirection: 'row',
-          overflow: 'hidden',
-          shadowColor: shadowCol,
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: shadowOp,
-          shadowRadius: shadowRadius,
-          elevation: 4,
-        }}
-        activeOpacity={1}
-        onPressIn={pressIn}
-        onPressOut={pressOut}
-        onPress={onPress}
-      >
-        {/* Left accent bar */}
-        {!isRestDay && (
-          <View style={{ width: isNext ? 4 : 3, backgroundColor: isNext ? '#7b8fff' : isCompleted ? '#3a3a5a' : accentColor, borderRadius: 2, marginVertical: 14, marginLeft: 12, opacity: isNext ? 1 : isCompleted ? 0.5 : isToday && !isCompleted ? 1 : 0.7 }} />
-        )}
+    <Animated.View style={{ transform: [{ scale }], marginBottom: 10 }}>
+      <Animated.View style={{ transform: [{ scale: nextPulse }] }}>
 
-        <View style={{ flex: 1, paddingHorizontal: 18, paddingVertical: 16 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            {/* Left: day name + workout type */}
-            <View style={{ flex: 1, marginRight: 12 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', gap: 6 }}>
-                <Text style={{ color: isRestDay ? '#6a6a8a' : COLORS.text, fontWeight: '700', fontSize: 16 }}>{dayName}</Text>
-                {workoutLabel ? (
-                  <Text style={{ color: isRestDay ? '#4a4a6a' : COLORS.muted, fontSize: 13 }}>– {workoutLabel}</Text>
-                ) : null}
+        {/* Nutrition card — in normal flow so it sets the wrapper height */}
+        <TouchableOpacity activeOpacity={1} onPress={() => { if (nutExpanded) setExpandedNutKey(null); }}
+          style={{
+            backgroundColor: nutBg,
+            borderBottomLeftRadius: 24,
+            borderBottomRightRadius: 24,
+            borderTopLeftRadius: 16,
+            borderTopRightRadius: 16,
+            marginHorizontal: 12,
+            paddingTop: 57,
+            shadowColor: '#4ade80',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.18,
+            shadowRadius: 6,
+            elevation: 2,
+          }}
+        >
+          {/* Nutrition summary row — tap to expand */}
+          {(() => {
+            const workoutDone = isCompleted;
+            const goalCal = nutritionGoal?.cal ?? 0;
+            const goalProt = nutritionGoal?.prot ?? 0;
+            const calHit = nutritionData && goalCal > 0 && nutritionData.calories >= goalCal * 0.9;
+            const protHit = nutritionData && goalProt > 0 && nutritionData.protein >= goalProt;
+            const nutWinCount = (workoutDone ? 1 : 0) + (calHit ? 1 : 0) + (protHit ? 1 : 0);
+            const totalNutWins = 3;
+            return (
+              <TouchableOpacity onPress={toggleNut} activeOpacity={0.7} style={{ paddingHorizontal: 16, paddingBottom: 5, paddingTop: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  {nutritionData ? (
+                    <>
+                      <Text style={{ color: '#4ade80', fontSize: 11, fontWeight: '600' }}>🔥 {nutritionData.calories.toLocaleString()}</Text>
+                      <Text style={{ color: '#4ade80', fontSize: 11, fontWeight: '600' }}>💪 {nutritionData.protein}g</Text>
+                      {nutritionData.carbs > 0 && <Text style={{ color: '#4ade80', fontSize: 11, fontWeight: '600' }}>🍚 {nutritionData.carbs}g</Text>}
+                      {nutritionData.fats > 0 && <Text style={{ color: '#4ade80', fontSize: 11, fontWeight: '600' }}>🥑 {nutritionData.fats}g</Text>}
+                      <Text style={{ color: '#4ade8066', fontSize: 10, fontWeight: '700' }}>{nutExpanded ? 'close' : 'edit'}</Text>
+                    </>
+                  ) : (
+                    <>
+                      <Text style={{ color: '#ffffff30', fontSize: 11, fontWeight: '600' }}>🔥 0 kcal</Text>
+                      <Text style={{ color: '#ffffff30', fontSize: 11, fontWeight: '600' }}>💪 0g</Text>
+                      <Text style={{ color: '#ffffff40', fontSize: 10, fontWeight: '700' }}>{nutExpanded ? 'close' : '+ log'}</Text>
+                    </>
+                  )}
+                </View>
+                <Text style={{ color: nutWinCount === totalNutWins ? '#4ade80' : '#ffffff40', fontSize: 10, fontWeight: '800', letterSpacing: 0.3 }}>daily wins: {nutWinCount}/{totalNutWins}</Text>
+              </TouchableOpacity>
+            );
+          })()}
+
+          {/* Expandable input area */}
+          <Animated.View style={{ maxHeight: nutExpandAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 240] }), overflow: 'hidden' }}>
+            <View style={{ paddingHorizontal: 14, paddingBottom: 12, paddingTop: 4, gap: 8 }}>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: '#4ade8088', fontSize: 9, fontWeight: '700', letterSpacing: 0.8, marginBottom: 4 }}>CALORIES</Text>
+                  <TextInput
+                    value={calInput}
+                    onChangeText={setCalInput}
+                    keyboardType="numeric"
+                    placeholder="e.g. 2400"
+                    placeholderTextColor="#ffffff20"
+                    style={{ backgroundColor: '#ffffff08', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 7, color: '#fff', fontSize: 13, borderWidth: 1, borderColor: '#4ade8030' }}
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: '#4ade8088', fontSize: 9, fontWeight: '700', letterSpacing: 0.8, marginBottom: 4 }}>PROTEIN (g)</Text>
+                  <TextInput
+                    value={protInput}
+                    onChangeText={setProtInput}
+                    keyboardType="numeric"
+                    placeholder="e.g. 180"
+                    placeholderTextColor="#ffffff20"
+                    style={{ backgroundColor: '#ffffff08', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 7, color: '#fff', fontSize: 13, borderWidth: 1, borderColor: '#4ade8030' }}
+                  />
+                </View>
               </View>
-              <Text style={{ color: isRestDay ? '#2a2a3a' : '#4a4a72', fontSize: 12, marginTop: 4 }}>
-                {isRestDay ? 'Rest & Recovery' : `${workoutExs.length} exercises`}
-              </Text>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: '#4ade8088', fontSize: 9, fontWeight: '700', letterSpacing: 0.8, marginBottom: 4 }}>CARBS (g)</Text>
+                  <TextInput
+                    value={carbInput}
+                    onChangeText={setCarbInput}
+                    keyboardType="numeric"
+                    placeholder="e.g. 310"
+                    placeholderTextColor="#ffffff20"
+                    style={{ backgroundColor: '#ffffff08', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 7, color: '#fff', fontSize: 13, borderWidth: 1, borderColor: '#4ade8030' }}
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: '#4ade8088', fontSize: 9, fontWeight: '700', letterSpacing: 0.8, marginBottom: 4 }}>FATS (g)</Text>
+                  <TextInput
+                    value={fatInput}
+                    onChangeText={setFatInput}
+                    keyboardType="numeric"
+                    placeholder="e.g. 85"
+                    placeholderTextColor="#ffffff20"
+                    style={{ backgroundColor: '#ffffff08', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 7, color: '#fff', fontSize: 13, borderWidth: 1, borderColor: '#4ade8030' }}
+                  />
+                </View>
+              </View>
+              <TouchableOpacity
+                onPress={() => {
+                  const cal = parseInt(calInput) || 0;
+                  const prot = parseInt(protInput) || 0;
+                  const carbs = parseInt(carbInput) || 0;
+                  const fats = parseInt(fatInput) || 0;
+                  onSaveNutrition(cal, prot, carbs, fats);
+                  setExpandedNutKey(null);
+                }}
+                style={{ backgroundColor: '#4ade80', borderRadius: 8, paddingVertical: 8, alignItems: 'center' }}
+              >
+                <Text style={{ color: '#000', fontWeight: '800', fontSize: 13 }}>Save →</Text>
+              </TouchableOpacity>
             </View>
-            {badge}
+          </Animated.View>
+        </TouchableOpacity>
+
+        {/* Day card — absolutely positioned on top, rendered last so it paints over nutrition */}
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPressIn={pressIn}
+          onPressOut={pressOut}
+          onPress={onPress}
+          style={{
+            position: 'absolute',
+            top: -2,
+            left: 0,
+            right: 0,
+            flexDirection: 'row',
+            backgroundColor: cardBg,
+            borderRadius: 14,
+            borderWidth: 1,
+            borderColor: cardBorder,
+            borderTopColor: cardBorderTop,
+            elevation: 2,
+          }}
+        >
+          {/* Left accent bar */}
+          {!isRestDay && (
+            <View style={{ width: isNext ? 4 : 3, backgroundColor: isNext ? '#7b8fff' : isCompleted ? '#3a3a5a' : accentColor, borderRadius: 2, marginVertical: 14, marginLeft: 12, opacity: isNext ? 1 : isCompleted ? 0.5 : isToday && !isCompleted ? 1 : 0.7 }} />
+          )}
+          <View style={{ flex: 1, paddingHorizontal: 18, paddingVertical: 9, opacity: isCompleted ? 0.55 : 1 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <View style={{ flex: 1 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', gap: 6 }}>
+                  <Text style={{ color: isRestDay ? '#8a8aaa' : '#ffffffcc', fontWeight: '700', fontSize: 16 }}>{dayName}</Text>
+                  {workoutLabel ? (
+                    <Text style={{ color: isRestDay ? '#6a6a8a' : '#ffffff77', fontSize: 13 }}>– {workoutLabel}</Text>
+                  ) : null}
+                </View>
+                <Text style={{ color: isRestDay ? '#4a4a6a' : '#ffffff44', fontSize: 12, marginTop: 4 }}>
+                  {isRestDay ? 'Rest & Recovery' : `${workoutExs.length} exercises`}
+                </Text>
+              </View>
+              <View style={{ paddingLeft: 8, alignItems: 'center', minWidth: 56 }}>
+                {badge}
+              </View>
+            </View>
           </View>
-        </View>
-      </TouchableOpacity>
+        </TouchableOpacity>
+
+      </Animated.View>
     </Animated.View>
   );
 }
@@ -1282,7 +1449,7 @@ function ConfettiEffect() {
 
 function ScrollPicker({ items, selectedValue, onValueChange, itemHeight = 46, width }) {
   const scrollRef = useRef(null);
-  const containerHeight = itemHeight * 3;
+  const containerHeight = itemHeight * 5;
   // Track the current committed index so we can avoid unnecessary re-renders
   const committedIdx = useRef(Math.max(0, items.indexOf(selectedValue)));
   // Resolve effective selected value (fall back to first item if empty/missing)
@@ -1293,7 +1460,7 @@ function ScrollPicker({ items, selectedValue, onValueChange, itemHeight = 46, wi
     const idx = Math.max(0, items.indexOf(effectiveSelected));
     committedIdx.current = idx;
     const timer = setTimeout(() => {
-      scrollRef.current?.scrollTo({ y: idx * itemHeight, animated: false });
+      scrollRef.current?.scrollTo({ y: idx * itemHeight + itemHeight, animated: false });
     }, 50);
     return () => clearTimeout(timer);
   }, []);
@@ -1303,12 +1470,12 @@ function ScrollPicker({ items, selectedValue, onValueChange, itemHeight = 46, wi
     const idx = Math.max(0, items.indexOf(effectiveSelected));
     if (idx !== committedIdx.current) {
       committedIdx.current = idx;
-      scrollRef.current?.scrollTo({ y: idx * itemHeight, animated: true });
+      scrollRef.current?.scrollTo({ y: idx * itemHeight + itemHeight, animated: true });
     }
   }, [effectiveSelected]);
 
   function handleMomentumEnd(e) {
-    const idx = Math.max(0, Math.min(Math.round(e.nativeEvent.contentOffset.y / itemHeight), items.length - 1));
+    const idx = Math.max(0, Math.min(Math.round((e.nativeEvent.contentOffset.y - itemHeight) / itemHeight), items.length - 1));
     committedIdx.current = idx;
     onValueChange(items[idx]);
   }
@@ -1316,13 +1483,13 @@ function ScrollPicker({ items, selectedValue, onValueChange, itemHeight = 46, wi
   return (
     <View style={{ height: containerHeight, width, overflow: 'hidden', borderRadius: 8 }}>
       {/* Selection highlight band */}
-      <View pointerEvents="none" style={{ position: 'absolute', top: itemHeight, left: 0, right: 0, height: itemHeight, backgroundColor: COLORS.accent + '18', borderTopWidth: 1, borderBottomWidth: 1, borderColor: COLORS.accent + '35', borderRadius: 8, zIndex: 1 }} />
+      <View pointerEvents="none" style={{ position: 'absolute', top: itemHeight * 2, left: 0, right: 0, height: itemHeight, backgroundColor: COLORS.accent + '18', borderTopWidth: 1, borderBottomWidth: 1, borderColor: COLORS.accent + '35', borderRadius: 8, zIndex: 1 }} />
       <ScrollView
         ref={scrollRef}
         showsVerticalScrollIndicator={false}
         snapToInterval={itemHeight}
         decelerationRate="fast"
-        contentContainerStyle={{ paddingVertical: itemHeight }}
+        contentContainerStyle={{ paddingVertical: itemHeight * 2 }}
         onMomentumScrollEnd={handleMomentumEnd}
         nestedScrollEnabled={true}
         scrollEventThrottle={16}
@@ -1342,7 +1509,7 @@ function ScrollPicker({ items, selectedValue, onValueChange, itemHeight = 46, wi
 
 
 function Root() {
-  const { height: screenHeight } = useWindowDimensions();
+  const { height: screenHeight, width: screenWidth } = useWindowDimensions();
   const [textVal, setTextVal] = useState('');
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState({});
@@ -1355,11 +1522,12 @@ function Root() {
 
   const [nutritionForm, setNutritionForm] = useState({ age: '', gender: '', heightFt: '', heightIn: '', weight: '', activityLevel: '' });
   const [nutritionResult, setNutritionResult] = useState(null);
-  const [nutritionLog, setNutritionLog] = useState({ calories: 0, protein: 0, date: '' });
   const [nutritionHistory, setNutritionHistory] = useState({});
   const [dailyWins, setDailyWins] = useState({});
   const [showNutritionLogModal, setShowNutritionLogModal] = useState(false);
+  const [expandedNutKey, setExpandedNutKey] = useState(null);
   const [nutritionLogInput, setNutritionLogInput] = useState({ calories: '', protein: '' });
+  const [nutritionLogDate, setNutritionLogDate] = useState('');
   const [stretchImgModal, setStretchImgModal] = useState(null);
   const [user, setUser] = useState(null);
   const [restTimerDuration, setRestTimerDuration] = useState(60);
@@ -1382,7 +1550,7 @@ function Root() {
   const [profileStep, setProfileStep] = useState(1);
   const [profileForm, setProfileForm] = useState({
     gender: '', age: '', weightLbs: '', heightFt: '', heightIn: '',
-    bodyFatPct: '', chest: '42', waist: '34', hips: '40', arms: '15', thighs: '24',
+    bodyFatPct: '18', chest: '40', waist: '34', hips: '38', arms: '14', thighs: '22',
     primaryGoal: '', trainingDays: '', fitnessLevel: '', activityLevel: '', sleepQuality: '',
   });
   const [processingStep, setProcessingStep] = useState(0);
@@ -1397,15 +1565,54 @@ function Root() {
   const [workoutChip, setWorkoutChip] = useState(false);
   const chipFade = useRef(new Animated.Value(0)).current;
   const chipScale = useRef(new Animated.Value(0.7)).current;
+  const [weekCardExpanded, setWeekCardExpanded] = useState(false);
+  const weekCardAnim = useRef(new Animated.Value(0)).current;
+  const weekSlideAnim = useRef(new Animated.Value(0)).current;
+  const { width: SCREEN_WIDTH } = require('react-native').Dimensions.get('window');
+  function changeWeek(newWeek) {
+    const dir = newWeek > currentWeek ? 1 : -1;
+    weekSlideAnim.setValue(0);
+    Animated.sequence([
+      Animated.timing(weekSlideAnim, { toValue: -dir * SCREEN_WIDTH, duration: 180, easing: Easing.in(Easing.cubic), useNativeDriver: true }),
+    ]).start(() => {
+      setCurrentWeek(newWeek);
+      weekSlideAnim.setValue(dir * SCREEN_WIDTH);
+      Animated.timing(weekSlideAnim, { toValue: 0, duration: 200, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+      setTimeout(() => {
+        if (!planFlatListRef.current || !plan) return;
+        let activeWeek = null;
+        for (let w = 1; w <= TOTAL_WEEKS; w++) {
+          const hasIncomplete = plan.some(d => !d.day.includes('Rest') && !completedWorkouts[`${d.day}|${w}`]);
+          if (hasIncomplete) { activeWeek = w; break; }
+        }
+        if (newWeek !== activeWeek) {
+          planFlatListRef.current.scrollToIndex({ index: 0, animated: false });
+        } else {
+          const nextIdx = plan.findIndex(d => !d.day.includes('Rest') && !completedWorkouts[`${d.day}|${newWeek}`]);
+          if (nextIdx > 0) planFlatListRef.current.scrollToIndex({ index: nextIdx, animated: false, viewPosition: 0.1 });
+        }
+      }, 50);
+    });
+  }
   const [nutritionExpanded, setNutritionExpanded] = useState(false);
-  const nutritionExpandAnim = useRef(new Animated.Value(0)).current;
+  const nutritionExpandAnim  = useRef(new Animated.Value(0)).current;
+  const nutritionContentAnim = useRef(new Animated.Value(0)).current;
+  const nutritionArrowAnim   = useRef(new Animated.Value(0)).current;
   const bmiAnim = useRef(new Animated.Value(0)).current;
   const planHeaderAnim = useRef(new Animated.Value(0)).current;
   const planStatsAnim  = useRef(new Animated.Value(0)).current;
   const planCardAnims  = useRef(Array.from({ length: 6 }, () => new Animated.Value(0))).current;
-  const dayEnterAnim   = useRef(new Animated.Value(0)).current;
+  const planEnterAnim      = useRef(new Animated.Value(1)).current;
+  const dayEnterAnim       = useRef(new Animated.Value(0)).current;
+  const progressEnterAnim  = useRef(new Animated.Value(0)).current;
+  const exerciseSlideAnim      = useRef(new Animated.Value(0)).current;
+  const pendingSlideDirection  = useRef(0);
+
+  const weightPulseAnim = useRef(new Animated.Value(1)).current;
   const [currentWeek, setCurrentWeek] = useState(1);
   const TOTAL_WEEKS = 8;
+  const [planSlideFromLeft, setPlanSlideFromLeft] = useState(false);
+  const [daySlideFromLeft, setDaySlideFromLeft] = useState(false);
   const [weekDetailFrom, setWeekDetailFrom] = useState('plan');
   const [settingsFrom, setSettingsFrom] = useState('plan');
   const [restTimerEnabled, setRestTimerEnabled] = useState(true);
@@ -1413,9 +1620,11 @@ function Root() {
   const [showNutritionNudge, setShowNutritionNudge] = useState(false);
   const [weightSetupMode, setWeightSetupMode] = useState('recommended');
   const [userMaxes, setUserMaxes] = useState({ bench: '', squat: '', deadlift: '' });
-  const [recentSet, setRecentSet] = useState({ exercise: 'Bench Press', weight: '', reps: '' });
   const [showWeightsModal, setShowWeightsModal] = useState(false);
+  const [showUpdateWeightsPrompt, setShowUpdateWeightsPrompt] = useState(false);
+  const [weightsPromptDismissed, setWeightsPromptDismissed] = useState(false);
   const weightsSeenRef = useRef(false);
+  const planFlatListRef = useRef(null);
   const [suggestedWeights, setSuggestedWeights] = useState(null);
   const [showCompleteButton, setShowCompleteButton] = useState(false);
   const [showSwitchSides, setShowSwitchSides] = useState(false);
@@ -1452,6 +1661,10 @@ function Root() {
           setCompletedWorkouts(validated);
           if (data.restTimerEnabled !== undefined) setRestTimerEnabled(data.restTimerEnabled);
           if (data.profile) setProfileForm(f => ({ ...f, ...data.profile }));
+          if (data.nutritionHistory) setNutritionHistory(data.nutritionHistory);
+          if (data.nutritionResult) setNutritionResult(data.nutritionResult);
+          if (data.dailyWins) setDailyWins(data.dailyWins);
+          if (data.weightsPromptDismissed) setWeightsPromptDismissed(true);
         }
       } catch (e) {}
       setScreen('login');
@@ -1479,13 +1692,23 @@ function Root() {
     setShowCompleteButton(false);
   }, [currentWeek, selectedDay]);
 
-  // Show weights setup modal the first time the plan screen is reached (skip if already set)
+  // Show weights prompt on first plan visit if week 1 is not yet complete
   useEffect(() => {
     if (screen === 'plan' && !weightsSeenRef.current) {
       weightsSeenRef.current = true;
-      if (!suggestedWeights) setShowWeightsModal(true);
+      const workoutDays = plan?.filter(d => !d.day.includes('Rest')) || [];
+      const week1Complete = workoutDays.length > 0 && workoutDays.every(d => completedWorkouts[`${d.day}|1`]);
+      if (!week1Complete) {
+        if (suggestedWeights) {
+          if (!weightsPromptDismissed) setShowUpdateWeightsPrompt(true);
+        } else {
+          setShowWeightsModal(true);
+        }
+      }
     }
   }, [screen]);
+
+  // Default nutrition panel to next day when entering plan screen
 
   // Trigger plan reveal animations + day screen entrance
   useEffect(() => {
@@ -1501,11 +1724,40 @@ function Root() {
         )),
       ]).start();
     }
+    if (screen === 'plan') {
+      planEnterAnim.setValue(0);
+      Animated.timing(planEnterAnim, { toValue: 1, duration: 260, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start(() => setPlanSlideFromLeft(false));
+    }
     if (screen === 'day') {
       dayEnterAnim.setValue(0);
-      Animated.spring(dayEnterAnim, { toValue: 1, tension: 70, friction: 10, useNativeDriver: true }).start();
+      Animated.timing(dayEnterAnim, { toValue: 1, duration: 260, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start(() => setDaySlideFromLeft(false));
+    }
+    if (screen === 'progress') {
+      if (pendingSlideDirection.current === 0) {
+        progressEnterAnim.setValue(0);
+        exerciseSlideAnim.setValue(0);
+        Animated.timing(progressEnterAnim, { toValue: 1, duration: 260, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+      }
+      weightPulseAnim.stopAnimation();
+      weightPulseAnim.setValue(1);
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(weightPulseAnim, { toValue: 1.08, duration: 550, useNativeDriver: true }),
+          Animated.timing(weightPulseAnim, { toValue: 1, duration: 550, useNativeDriver: true }),
+        ])
+      ).start();
+    } else {
+      weightPulseAnim.stopAnimation();
+      weightPulseAnim.setValue(1);
     }
   }, [screen]);
+
+  useEffect(() => {
+    if (pendingSlideDirection.current !== 0) {
+      Animated.timing(exerciseSlideAnim, { toValue: 0, duration: 260, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start();
+      pendingSlideDirection.current = 0;
+    }
+  }, [selectedExercise]);
 
   // Auto-apply smart defaults when arriving at each onboarding step
   useEffect(() => {
@@ -1684,6 +1936,9 @@ function Root() {
       setUser(newUser);
       setLogs({});
       setCompletedWorkouts({});
+      setNutritionHistory({});
+      setNutritionResult(null);
+      setDailyWins({});
       setPlan(null);
       setSelectedDay(null);
       setSelectedExercise(null);
@@ -1719,6 +1974,11 @@ function Root() {
       setCurrentWeek(1);
       setAnswers({ name: found.name });
       setAuthError('');
+      // Reset all user-specific data before loading new user's data
+      setNutritionHistory({});
+      setNutritionResult(null);
+      setDailyWins({});
+      setSuggestedWeights(null);
       if (found.profile) setProfileForm(f => ({ ...f, ...found.profile }));
       const foundLogs = found.logs || {};
       setLogs(foundLogs);
@@ -1736,7 +1996,40 @@ function Root() {
       setCompletedWorkouts(validated);
       if (found.restTimerEnabled !== undefined) setRestTimerEnabled(found.restTimerEnabled);
       if (found.suggestedWeights) setSuggestedWeights(found.suggestedWeights);
-      setScreen('quiz');
+      if (found.nutritionHistory) setNutritionHistory(found.nutritionHistory);
+      if (found.dailyWins) setDailyWins(found.dailyWins);
+      if (found.nutritionResult) {
+        setNutritionResult(found.nutritionResult);
+      } else if (found.profile) {
+        // nutritionResult wasn't saved — recalculate from profile
+        const pf = found.profile;
+        const age = pf.age; const gender = pf.gender || found.gender;
+        const heightFt = pf.heightFt; const heightIn = pf.heightIn || '0';
+        const weight = pf.weightLbs; const activityLevel = pf.activityLevel || 'Moderately Active';
+        if (age && gender && heightFt && weight) {
+          const tdee = calculateTDEE(age, gender, heightFt, heightIn, weight, activityLevel);
+          const goalAdj = { 'Build Muscle': 300, 'Lose Fat': -500, 'Build Muscle & Lose Fat': 0, 'Get Stronger': 150 };
+          const adj = goalAdj[pf.primaryGoal] ?? 0;
+          const nr = { tdee, cut: tdee - 500, bulk: tdee + 300, target: tdee + adj, proteinG: Math.round(parseFloat(weight)), weight: parseFloat(weight) };
+          setNutritionResult(nr);
+          updateDoc(doc(db, 'users', email), { nutritionResult: nr });
+        }
+      }
+      if (found.goal) {
+        // Fully registered — restore plan and route to appropriate screen
+        setPlan(WORKOUT_PLANS[found.goal]);
+        setAnswers(a => ({ ...a, goal: found.goal }));
+        const isFirstTime = Object.keys(foundLogs).length === 0;
+        setScreen(isFirstTime ? 'plan-preview' : 'plan');
+      } else if (found.profile) {
+        // Completed profile setup but never picked a goal — go to quiz
+        setScreen('quiz');
+      } else {
+        // Never finished profile setup — restart from beginning
+        setProfileStep(1);
+        setProfileForm({ gender: '', age: '', weightLbs: '', heightFt: '', heightIn: '', bodyFatPct: '', chest: '', waist: '', hips: '', arms: '', thighs: '', primaryGoal: '', trainingDays: '', fitnessLevel: '', sleepQuality: '', dailyCalories: '' });
+        setScreen('profile-setup');
+      }
     });
   }
 
@@ -1800,10 +2093,12 @@ function Root() {
         const bulk = tdee + 300;
         const target = tdee + adj;
         const proteinG = Math.round(parseFloat(weight));
-        setNutritionResult({ tdee, cut, bulk, target, proteinG, weight: parseFloat(weight) });
+        const nr = { tdee, cut, bulk, target, proteinG, weight: parseFloat(weight) };
+        setNutritionResult(nr);
+        if (user) updateDoc(doc(db, 'users', user.email), { nutritionResult: nr });
       }
       const isFirstTime = Object.keys(logs).length === 0;
-      setScreen(isFirstTime ? 'plan-preview' : 'weights-setup');
+      setScreen(isFirstTime ? 'plan-preview' : 'plan');
       return;
     }
     if (step < QUESTIONS.length - 1) {
@@ -2115,7 +2410,7 @@ function Root() {
 
           {/* Log In button */}
           <AnimatedPress
-            style={{ backgroundColor: COLORS.accent, borderRadius: 14, paddingVertical: 18, alignItems: 'center', marginBottom: 20, shadowColor: COLORS.accent, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.6, shadowRadius: 16, elevation: 10 }}
+            style={{ backgroundColor: COLORS.accent, borderRadius: 14, paddingVertical: 18, alignItems: 'center', marginBottom: 20, shadowColor: COLORS.accent, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.25, shadowRadius: 5, elevation: 4 }}
             onPress={handleLogin}
             scaleDown={0.95}
           >
@@ -2141,19 +2436,6 @@ function Root() {
     );
   }
 
-  // ── Daily Wins helpers ───────────────────────────────────
-  function calcDailyStreak(wins) {
-    let count = 0;
-    const now = new Date();
-    for (let i = 0; i < 365; i++) {
-      const d = new Date(now);
-      d.setDate(now.getDate() - i);
-      const w = wins[d.toDateString()];
-      if (w && (w.workout || w.protein || w.calories)) count++;
-      else break;
-    }
-    return count;
-  }
 
   function getTodayScore(wins) {
     const today = new Date().toDateString();
@@ -2161,119 +2443,6 @@ function Root() {
     return (w.workout ? 1 : 0) + (w.protein ? 1 : 0) + (w.calories ? 1 : 0);
   }
 
-// ── Week Tracker Card (shared) ───────────────────────────
-  function WeekTrackerCard({ fromScreen }) {
-    const workoutDays = (plan || []).filter(d => !d.day.includes('Rest'));
-    const completedDays = workoutDays.filter(d =>
-      d.exercises.some(e => (logs[logKey(d.day, e)] || []).some(en => en.programWeek === currentWeek))
-    ).length;
-    const progress = workoutDays.length > 0 ? completedDays / workoutDays.length : 0;
-    const totalSessionsDone = Object.keys(completedWorkouts).filter(k => completedWorkouts[k]).length;
-    const weekComplete = completedDays === workoutDays.length && workoutDays.length > 0 &&
-      workoutDays.every(d => {
-        const wk = `${d.day}|${currentWeek}`;
-        const dayExs = d.exercises.filter(e =>
-          !e.includes('Full Body Stretching') && !e.includes('Full Body Foam Rolling') && !e.includes('Incline Walk')
-        );
-        const hasLog = dayExs.some(e => (logs[logKey(d.day, e)] || []).some(en => en.programWeek === currentWeek));
-        return !!completedWorkouts[wk] && hasLog;
-      });
-    const momentum = weekComplete
-      ? { label: '🏆 Week complete!', color: '#4ade80' }
-      : progress >= 0.5
-      ? { label: '🔥 You\'re on track', color: '#f97316' }
-      : completedDays > 0
-      ? { label: '💪 Keep the momentum', color: COLORS.muted }
-      : { label: 'Start Day 1 →', color: COLORS.accent };
-    return (
-      <View style={{ marginBottom: 16 }}>
-        <TouchableOpacity activeOpacity={0.85} onPress={() => { setWeekDetailFrom(fromScreen || 'plan'); setScreen('weekDetail'); }}
-          style={{ borderRadius: 20, shadowColor: COLORS.accent, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.2, shadowRadius: 24, elevation: 8 }}>
-          <LinearGradient
-            colors={['#1e1040', '#0e1630', '#0a0a1a']}
-            start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-            style={{ borderRadius: 20, padding: 24, borderWidth: 1, borderColor: '#e9456028', borderTopColor: '#e9456055' }}
-          >
-          {/* Top row */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-            <View>
-              <Text style={{ color: COLORS.muted, fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 4 }}>Current Week</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
-                <Text style={{ color: COLORS.text, fontWeight: '900', fontSize: 36, letterSpacing: -1 }}>{currentWeek}</Text>
-                <Text style={{ color: COLORS.muted, fontSize: 16 }}>/ {TOTAL_WEEKS}</Text>
-              </View>
-            </View>
-            <View style={{ alignItems: 'flex-end', gap: 8 }}>
-              <View style={{ flexDirection: 'row', gap: 6 }}>
-                <TouchableOpacity onPress={() => setCurrentWeek(w => Math.max(1, w - 1))} style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: '#2a2a4a', alignItems: 'center', justifyContent: 'center', opacity: currentWeek > 1 ? 1 : 0.3 }}>
-                  <Text style={{ color: COLORS.text, fontSize: 18, fontWeight: '700', lineHeight: 22 }}>‹</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => setCurrentWeek(w => Math.min(TOTAL_WEEKS, w + 1))} style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: '#2a2a4a', alignItems: 'center', justifyContent: 'center', opacity: currentWeek < TOTAL_WEEKS ? 1 : 0.3 }}>
-                  <Text style={{ color: COLORS.text, fontSize: 18, fontWeight: '700', lineHeight: 22 }}>›</Text>
-                </TouchableOpacity>
-              </View>
-              <Text style={{ color: momentum.color, fontSize: 12, fontWeight: '600', opacity: 0.9 }}>{momentum.label}</Text>
-            </View>
-          </View>
-          {/* Progress bar */}
-          {/* Weekly sessions progress bar */}
-          <View style={{ marginBottom: 6 }}>
-            <AnimatedProgressBar progress={progress} height={6} color={COLORS.accent} trackColor="#2a2a4a" glowColor={COLORS.accent} />
-          </View>
-          <Text style={{ color: COLORS.muted, fontSize: 11, marginBottom: 14 }}>{completedDays} of {workoutDays.length} sessions this week</Text>
-          {/* Stats row */}
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <View>
-              <Text style={{ color: COLORS.muted, fontSize: 11, fontWeight: '700', letterSpacing: 0.8, textTransform: 'uppercase' }}>This Week</Text>
-              <Text style={{ color: COLORS.text, fontSize: 18, fontWeight: '800', marginTop: 2 }}>{completedDays} <Text style={{ color: COLORS.muted, fontSize: 13, fontWeight: '400' }}>/ {workoutDays.length}</Text></Text>
-            </View>
-            <View style={{ alignItems: 'center' }}>
-              <Text style={{ color: COLORS.muted, fontSize: 11, fontWeight: '700', letterSpacing: 0.8, textTransform: 'uppercase' }}>Total Done</Text>
-              <Text style={{ color: COLORS.text, fontSize: 18, fontWeight: '800', marginTop: 2 }}>{totalSessionsDone} <Text style={{ color: COLORS.muted, fontSize: 13, fontWeight: '400' }}>sessions</Text></Text>
-            </View>
-            <View style={{ alignItems: 'flex-end' }}>
-              <Text style={{ color: COLORS.muted, fontSize: 11, fontWeight: '700', letterSpacing: 0.8, textTransform: 'uppercase' }}>Remaining</Text>
-              <Text style={{ color: COLORS.text, fontSize: 18, fontWeight: '800', marginTop: 2 }}>{workoutDays.length - completedDays} <Text style={{ color: COLORS.muted, fontSize: 13, fontWeight: '400' }}>left</Text></Text>
-            </View>
-          </View>
-
-          {/* Daily Wins row */}
-          {(() => {
-            const streak = calcDailyStreak(dailyWins);
-            const todayScore = getTodayScore(dailyWins);
-            const scoreColor = todayScore === 3 ? '#4ade80' : todayScore === 2 ? '#fbbf24' : todayScore === 1 ? '#f97316' : COLORS.muted;
-            return (
-              <View style={{ marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#ffffff0a', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                {streak >= 1 && <Text style={{ color: '#f97316', fontSize: 12, fontWeight: '700' }}>🔥 {streak} day streak</Text>}
-                {streak >= 1 && <Text style={{ color: '#ffffff25', fontSize: 13 }}>•</Text>}
-                <Text style={{ color: scoreColor, fontSize: 12, fontWeight: '700' }}>Today: {todayScore}/3{todayScore === 3 ? ' ✅' : ''}</Text>
-              </View>
-            );
-          })()}
-          </LinearGradient>
-        </TouchableOpacity>
-
-        {/* Week complete card */}
-        {weekComplete && (
-          <View style={{ marginTop: 10, borderRadius: 16, borderWidth: 1, borderColor: '#4ade8040', borderTopColor: '#4ade8070', backgroundColor: '#4ade8010', padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <Text style={{ fontSize: 22 }}>🏆</Text>
-              <View>
-                <Text style={{ color: '#4ade80', fontSize: 15, fontWeight: '800' }}>Week complete!</Text>
-                <Text style={{ color: COLORS.muted, fontSize: 12, marginTop: 2 }}>You crushed all {workoutDays.length} sessions.</Text>
-              </View>
-            </View>
-            <TouchableOpacity
-              onPress={() => { setWeekDetailFrom(fromScreen || 'plan'); setScreen('weekDetail'); }}
-              style={{ backgroundColor: '#4ade8025', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1, borderColor: '#4ade8060' }}
-            >
-              <Text style={{ color: '#4ade80', fontSize: 13, fontWeight: '700' }}>View Progress</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
-    );
-  }
 
   // ── Next Action Card ─────────────────────────────────────
   function NextActionCard() {
@@ -3902,7 +4071,7 @@ function Root() {
             </Text>
           </View>
           <TouchableOpacity
-            onPress={() => setScreen('weights-setup')}
+            onPress={() => setScreen('plan')}
             style={{ backgroundColor: '#4ade80', borderRadius: 14, paddingVertical: 16, alignItems: 'center' }}
           >
             <Text style={{ color: '#000', fontWeight: '900', fontSize: 16 }}>Start Day 1 Streak 🔥</Text>
@@ -3915,189 +4084,21 @@ function Root() {
     );
   }
 
-  // ── Starting Weights Setup Screen ────────────────────────
-  if (screen === 'weights-setup') {
-    const modes = [
-      {
-        key: 'recommended',
-        icon: '🔥',
-        title: 'Recommended',
-        desc: "We'll choose weights for you and adjust as you train",
-        badge: 'DEFAULT',
-      },
-      {
-        key: 'maxes',
-        icon: '💪',
-        title: 'Enter your maxes',
-        desc: 'Set your 1-rep max for the big lifts',
-      },
-      {
-        key: 'recent',
-        icon: '📊',
-        title: 'Enter a recent set',
-        desc: "Last time you did bench, what did you lift?",
-      },
-    ];
-
-    return (
-      <KeyboardAvoidingView style={[styles.container, { backgroundColor: COLORS.bg }]} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 140 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-          {/* Header */}
-          <View style={{ marginTop: 60, marginBottom: 28 }}>
-            <Text style={{ color: COLORS.muted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 6 }}>ALMOST THERE</Text>
-            <Text style={{ color: COLORS.text, fontSize: 26, fontWeight: '900', letterSpacing: -0.5, marginBottom: 8 }}>
-              Set your starting{'\n'}weights
-            </Text>
-            <Text style={{ color: COLORS.muted, fontSize: 13, lineHeight: 19 }}>
-              This helps us recommend the right weights from day one. You can always update this later.
-            </Text>
-          </View>
-
-          {/* Mode cards */}
-          <View style={{ gap: 10, marginBottom: 24 }}>
-            {modes.map(({ key, icon, title, desc, badge }) => {
-              const active = weightSetupMode === key;
-              return (
-                <TouchableOpacity
-                  key={key}
-                  onPress={() => setWeightSetupMode(key)}
-                  style={{
-                    backgroundColor: active ? '#ffffff0d' : COLORS.surface,
-                    borderRadius: 16, padding: 16,
-                    borderWidth: active ? 1.5 : 1,
-                    borderColor: active ? '#ffffff35' : '#ffffff10',
-                    transform: [{ scale: active ? 1.01 : 1 }],
-                  }}
-                >
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                    <Text style={{ fontSize: 24 }}>{icon}</Text>
-                    <View style={{ flex: 1 }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 3 }}>
-                        <Text style={{ color: active ? COLORS.text : COLORS.muted, fontWeight: '800', fontSize: 15 }}>{title}</Text>
-                        {badge && (
-                          <View style={{ backgroundColor: COLORS.accent + '20', borderRadius: 5, paddingHorizontal: 6, paddingVertical: 2, borderWidth: 1, borderColor: COLORS.accent + '40' }}>
-                            <Text style={{ color: COLORS.accent, fontSize: 9, fontWeight: '800' }}>{badge}</Text>
-                          </View>
-                        )}
-                      </View>
-                      <Text style={{ color: COLORS.muted, fontSize: 12, lineHeight: 17 }}>{desc}</Text>
-                    </View>
-                    <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 1.5, borderColor: active ? '#ffffff50' : '#ffffff20', alignItems: 'center', justifyContent: 'center', backgroundColor: active ? '#ffffff15' : 'transparent' }}>
-                      {active && <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.text }} />}
-                    </View>
-                  </View>
-
-                  {/* Mode 2: maxes inputs */}
-                  {key === 'maxes' && active && (
-                    <View style={{ marginTop: 16, gap: 10 }}>
-                      {[
-                        { field: 'bench',    label: 'Bench Press',   placeholder: 'e.g. 135' },
-                        { field: 'squat',    label: 'Back Squat',    placeholder: 'e.g. 185' },
-                        { field: 'deadlift', label: 'Deadlift',      placeholder: 'e.g. 225' },
-                      ].map(({ field, label, placeholder }) => (
-                        <View key={field} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#0e0e22', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, borderWidth: 1, borderColor: '#ffffff12' }}>
-                          <Text style={{ color: COLORS.muted, fontSize: 13, fontWeight: '600', flex: 1 }}>{label}</Text>
-                          <TextInput
-                            style={{ color: COLORS.text, fontSize: 16, fontWeight: '700', textAlign: 'right', minWidth: 60 }}
-                            placeholder={placeholder}
-                            placeholderTextColor={COLORS.muted + '80'}
-                            keyboardType="numeric"
-                            value={userMaxes[field]}
-                            onChangeText={v => setUserMaxes(m => ({ ...m, [field]: v }))}
-                          />
-                          <Text style={{ color: COLORS.muted, fontSize: 12, marginLeft: 6 }}>lbs</Text>
-                        </View>
-                      ))}
-                    </View>
-                  )}
-
-                  {/* Mode 3: recent set inputs */}
-                  {key === 'recent' && active && (
-                    <View style={{ marginTop: 16, gap: 10 }}>
-                      <View style={{ flexDirection: 'row', gap: 8 }}>
-                        {['Bench Press', 'Squat', 'Deadlift'].map(ex => (
-                          <TouchableOpacity
-                            key={ex}
-                            onPress={() => setRecentSet(s => ({ ...s, exercise: ex }))}
-                            style={{
-                              flex: 1, alignItems: 'center', paddingVertical: 8,
-                              backgroundColor: recentSet.exercise === ex ? COLORS.accent + '20' : '#0e0e22',
-                              borderRadius: 10, borderWidth: 1,
-                              borderColor: recentSet.exercise === ex ? COLORS.accent + '50' : '#ffffff10',
-                            }}
-                          >
-                            <Text style={{ color: recentSet.exercise === ex ? COLORS.accent : COLORS.muted, fontSize: 11, fontWeight: '700' }}>{ex}</Text>
-                          </TouchableOpacity>
-                        ))}
-                      </View>
-                      <View style={{ flexDirection: 'row', gap: 8 }}>
-                        <View style={{ flex: 1, backgroundColor: '#0e0e22', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, borderWidth: 1, borderColor: '#ffffff12', flexDirection: 'row', alignItems: 'center' }}>
-                          <Text style={{ color: COLORS.muted, fontSize: 12, flex: 1 }}>Weight</Text>
-                          <TextInput
-                            style={{ color: COLORS.text, fontSize: 16, fontWeight: '700', textAlign: 'right', minWidth: 50 }}
-                            placeholder="135"
-                            placeholderTextColor={COLORS.muted + '80'}
-                            keyboardType="numeric"
-                            value={recentSet.weight}
-                            onChangeText={v => setRecentSet(s => ({ ...s, weight: v }))}
-                          />
-                          <Text style={{ color: COLORS.muted, fontSize: 12, marginLeft: 6 }}>lbs</Text>
-                        </View>
-                        <View style={{ flex: 1, backgroundColor: '#0e0e22', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, borderWidth: 1, borderColor: '#ffffff12', flexDirection: 'row', alignItems: 'center' }}>
-                          <Text style={{ color: COLORS.muted, fontSize: 12, flex: 1 }}>Reps</Text>
-                          <TextInput
-                            style={{ color: COLORS.text, fontSize: 16, fontWeight: '700', textAlign: 'right', minWidth: 50 }}
-                            placeholder="8"
-                            placeholderTextColor={COLORS.muted + '80'}
-                            keyboardType="numeric"
-                            value={recentSet.reps}
-                            onChangeText={v => setRecentSet(s => ({ ...s, reps: v }))}
-                          />
-                        </View>
-                      </View>
-                    </View>
-                  )}
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-
-          <Text style={{ color: COLORS.muted, fontSize: 12, textAlign: 'center', lineHeight: 18, opacity: 0.7 }}>
-            Don't worry — you can update weights any time before a set.
-          </Text>
-        </ScrollView>
-
-        {/* Bottom CTA */}
-        <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: 24, paddingTop: 14, paddingBottom: 28, backgroundColor: COLORS.bg, borderTopWidth: 1, borderTopColor: '#ffffff08' }}>
-          <AnimatedPress
-            style={{ backgroundColor: COLORS.accent, borderRadius: 14, paddingVertical: 16, alignItems: 'center', marginBottom: 10 }}
-            onPress={() => setScreen('plan')}
-            scaleDown={0.97}
-          >
-            <Text style={{ color: '#000', fontWeight: '900', fontSize: 16 }}>
-              {weightSetupMode === 'recommended' ? "Let's Go 🚀" : 'Confirm & Start →'}
-            </Text>
-          </AnimatedPress>
-          <TouchableOpacity onPress={() => setScreen('plan')} style={{ alignItems: 'center' }}>
-            <Text style={{ color: COLORS.muted, fontSize: 13 }}>Skip for now →</Text>
-          </TouchableOpacity>
-        </View>
-      </KeyboardAvoidingView>
-    );
-  }
-
   // ── Nutrition expanded content (no outer card wrapper) ───
   function NutritionExpandedContent({ onLog }) {
     if (!nutritionResult) return null;
     const goalCal  = nutritionResult.target ?? nutritionResult.tdee;
     const goalProt = nutritionResult.proteinG;
-    const todayKey = new Date().toDateString();
-    const log      = nutritionLog.date === todayKey ? nutritionLog : { calories: 0, protein: 0 };
+    const DAY_NAMES_NEC = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const todayName = DAY_NAMES_NEC[new Date().getDay()];
+    const todayPlanIdx = plan?.findIndex(d => d.day.startsWith(todayName)) ?? -1;
+    const todayNutKey = todayPlanIdx !== -1 ? `w${currentWeek}_d${todayPlanIdx + 1}` : null;
+    const log = (todayNutKey && nutritionHistory[todayNutKey]) || { calories: 0, protein: 0 };
     const calPct   = Math.min(1, goalCal  > 0 ? log.calories / goalCal  : 0);
     const protPct  = Math.min(1, goalProt > 0 ? log.protein  / goalProt : 0);
     const hasData  = log.calories > 0 || log.protein > 0;
     const protLeft = Math.max(0, goalProt - log.protein);
-    const todayW   = (dailyWins || {})[todayKey] || {};
+    const todayW   = (dailyWins || {})[todayNutKey] || {};
     const score    = (todayW.workout ? 1 : 0) + (todayW.protein ? 1 : 0) + (todayW.calories ? 1 : 0);
     let insight, insightColor;
     if (!hasData)                         { insight = 'Log your meals to track progress';                             insightColor = '#ffffff35'; }
@@ -4121,11 +4122,9 @@ function Root() {
         {/* Header + big numbers */}
         <View style={{ marginBottom: 16, marginTop: 12 }}>
           <Text style={{ color: '#ffffff40', fontSize: 10, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 }}>Today's Target</Text>
-          <View style={{ flexDirection: 'row', gap: 20 }}>
-            <Text style={{ color: COLORS.text, fontSize: 18, fontWeight: '900' }}>🔥 <Text style={{ color: hasData ? COLORS.text : '#ffffff55' }}>{hasData ? log.calories.toLocaleString() : goalCal.toLocaleString()}</Text><Text style={{ color: COLORS.muted, fontSize: 13, fontWeight: '400' }}> / {goalCal.toLocaleString()} kcal</Text></Text>
-          </View>
-          <View style={{ marginTop: 4 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 20 }}>
             <Text style={{ color: COLORS.text, fontSize: 18, fontWeight: '900' }}>💪 <Text style={{ color: hasData ? COLORS.text : '#ffffff55' }}>{hasData ? log.protein : goalProt}</Text><Text style={{ color: COLORS.muted, fontSize: 13, fontWeight: '400' }}>g / {goalProt}g protein</Text></Text>
+            <Text style={{ color: COLORS.text, fontSize: 18, fontWeight: '900' }}>🔥 <Text style={{ color: hasData ? COLORS.text : '#ffffff55' }}>{hasData ? log.calories.toLocaleString() : goalCal.toLocaleString()}</Text><Text style={{ color: COLORS.muted, fontSize: 13, fontWeight: '400' }}> / {goalCal.toLocaleString()} kcal</Text></Text>
           </View>
         </View>
         <View style={{ gap: 14, marginBottom: 14 }} onLayout={e => setBarWidth(e.nativeEvent.layout.width)}>
@@ -4144,20 +4143,26 @@ function Root() {
             </View>
           ))}
         </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Text style={{ color: insightColor, fontSize: 12, fontWeight: '600', flex: 1, marginRight: 12 }}>{insight}</Text>
-          <TouchableOpacity onPress={onLog} style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, backgroundColor: '#ffffff08', borderWidth: 1, borderColor: '#ffffff12' }}>
-            <Text style={{ color: '#ffffff80', fontSize: 12, fontWeight: '700' }}>Log →</Text>
-          </TouchableOpacity>
-        </View>
+        <Text style={{ color: insightColor, fontSize: 12, fontWeight: '600', marginBottom: 14 }}>{insight}</Text>
+        <TouchableOpacity onPress={onLog} style={{ borderRadius: 10, backgroundColor: '#ffffff0d', borderWidth: 1, borderColor: '#ffffff14', paddingVertical: 13, alignItems: 'center' }}>
+          <Text style={{ color: COLORS.text, fontSize: 14, fontWeight: '700' }}>+ Log Food</Text>
+        </TouchableOpacity>
       </View>
     );
   }
 
   // ── Plan Overview Screen ─────────────────────────────────
+  function navigateToDay(item) {
+    setSelectedDay(item);
+    setActiveExerciseIndex(0);
+    setRestTimerRunning(false);
+    setRestingForExercise(null);
+    setScreen('day');
+  }
+
   if (screen === 'plan') {
     return (
-      <View style={[styles.container, { paddingTop: 70 }]}>
+      <Animated.View style={[styles.container, { paddingTop: 70 }, { transform: [{ translateX: planEnterAnim.interpolate({ inputRange: [0, 1], outputRange: [planSlideFromLeft ? -screenWidth : screenWidth, 0] }) }] }]}>
         <LogoutBtn />
         <TouchableOpacity onPress={restart} style={[styles.backBtn, { position: 'absolute', top: 20, left: 16, zIndex: 10 }]}>
           <Text style={styles.backText}>‹</Text>
@@ -4244,28 +4249,121 @@ function Root() {
         <NextActionCard />
 
         {/* Week Tracker Card */}
-        <View style={{ marginBottom: 12 }}>
-          <WeekTrackerCard />
-        </View>
+        {/* Week Tracker — inlined as IIFE so AnimatedProgressBar keeps stable identity across re-renders */}
+        {(() => {
+          const workoutDays = (plan || []).filter(d => !d.day.includes('Rest'));
+          const completedDays = workoutDays.filter(d =>
+            d.exercises.some(e => (logs[logKey(d.day, e)] || []).some(en => en.programWeek === currentWeek))
+          ).length;
+          const progress = workoutDays.length > 0 ? completedDays / workoutDays.length : 0;
+          const weekComplete = completedDays === workoutDays.length && workoutDays.length > 0 &&
+            workoutDays.every(d => {
+              const wk = `${d.day}|${currentWeek}`;
+              const dayExs = d.exercises.filter(e =>
+                !e.includes('Full Body Stretching') && !e.includes('Full Body Foam Rolling') && !e.includes('Incline Walk')
+              );
+              const hasLog = dayExs.some(e => (logs[logKey(d.day, e)] || []).some(en => en.programWeek === currentWeek));
+              return !!completedWorkouts[wk] && hasLog;
+            });
+          return (
+            <View style={{ marginBottom: 12 }}>
+              <TouchableOpacity activeOpacity={0.85} onPress={() => {
+                  const toVal = weekCardExpanded ? 0 : 1;
+                  setWeekCardExpanded(!weekCardExpanded);
+                  Animated.spring(weekCardAnim, { toValue: toVal, useNativeDriver: false, friction: 9, tension: 55 }).start();
+                }}
+                style={{ borderRadius: 20, shadowColor: COLORS.accent, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.2, shadowRadius: 24, elevation: 8 }}>
+                <LinearGradient
+                  colors={['#1e1040', '#0e1630', '#0a0a1a']}
+                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                  style={{ borderRadius: 16, paddingHorizontal: 18, paddingVertical: 12, borderWidth: 1, borderColor: '#e9456028', borderTopColor: '#e9456055' }}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <View>
+                      <Text style={{ color: COLORS.muted, fontSize: 10, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 2 }}>Current Week</Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 5 }}>
+                        <Text style={{ color: COLORS.text, fontWeight: '900', fontSize: 28, letterSpacing: -1 }}>{currentWeek}</Text>
+                        <Text style={{ color: COLORS.muted, fontSize: 14 }}>/ {TOTAL_WEEKS}</Text>
+                      </View>
+                    </View>
+                    <View style={{ flexDirection: 'row', gap: 6 }}>
+                      <TouchableOpacity onPress={() => { if (currentWeek > 1) changeWeek(currentWeek - 1); }} style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: '#2a2a4a', alignItems: 'center', justifyContent: 'center', opacity: currentWeek > 1 ? 1 : 0.3 }}>
+                        <Text style={{ color: COLORS.text, fontSize: 18, fontWeight: '700', lineHeight: 22 }}>‹</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => { if (currentWeek < TOTAL_WEEKS) changeWeek(currentWeek + 1); }} style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: '#2a2a4a', alignItems: 'center', justifyContent: 'center', opacity: currentWeek < TOTAL_WEEKS ? 1 : 0.3 }}>
+                        <Text style={{ color: COLORS.text, fontSize: 18, fontWeight: '700', lineHeight: 22 }}>›</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                  <View style={{ marginBottom: 8 }}>
+                    <AnimatedProgressBar key={screen} progress={progress} height={6} color={COLORS.accent} trackColor="#2a2a4a" glowColor={COLORS.accent} delay={200} />
+                  </View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Text style={{ color: COLORS.text, fontSize: 13, fontWeight: '700' }}>{completedDays} / {workoutDays.length} sessions</Text>
+                      <Text style={{ color: '#ffffff25', fontSize: 13 }}>•</Text>
+                      <Text style={{ color: COLORS.muted, fontSize: 13 }}>{workoutDays.length - completedDays} left</Text>
+                    </View>
+                    {weekComplete && !weekCardExpanded && (
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                        <Text style={{ fontSize: 14 }}>🏆</Text>
+                        <Text style={{ color: '#4ade80', fontSize: 13, fontWeight: '700' }}>Week complete</Text>
+                      </View>
+                    )}
+                  </View>
+                  <Animated.View style={{ maxHeight: weekCardAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 200] }), overflow: 'hidden' }}>
+                    <View style={{ marginTop: 16, paddingTop: 14, borderTopWidth: 1, borderTopColor: '#ffffff0a', gap: 10 }}>
+                      {weekComplete && (
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                          <Text style={{ fontSize: 18 }}>🏆</Text>
+                          <Text style={{ color: '#4ade80', fontSize: 13, fontWeight: '700' }}>Week complete — you crushed all {workoutDays.length} sessions!</Text>
+                        </View>
+                      )}
+                      <TouchableOpacity
+                        onPress={() => { setWeekDetailFrom('plan'); setScreen('weekDetail'); }}
+                        style={{ borderRadius: 10, backgroundColor: '#ffffff08', borderWidth: 1, borderColor: '#ffffff12', paddingVertical: 11, alignItems: 'center' }}
+                      >
+                        <Text style={{ color: COLORS.text, fontSize: 13, fontWeight: '700' }}>View Week Details →</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </Animated.View>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          );
+        })()}
 
         {/* Expandable Nutrition Bar */}
-        {nutritionResult && (() => {
-          const todayKey = new Date().toDateString();
-          const log = nutritionLog.date === todayKey ? nutritionLog : { calories: 0, protein: 0 };
+        {false && nutritionResult && (() => {
+          const DAY_NAMES_NB = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+          const todayNameNB = DAY_NAMES_NB[new Date().getDay()];
+          const todayPlanIdxNB = plan?.findIndex(d => d.day.startsWith(todayNameNB)) ?? -1;
+          const todayNutKeyNB = todayPlanIdxNB !== -1 ? `w${currentWeek}_d${todayPlanIdxNB + 1}` : null;
+          const log = (todayNutKeyNB && nutritionHistory[todayNutKeyNB]) || { calories: 0, protein: 0 };
           const hasLogged = log.calories > 0 || log.protein > 0;
           const goalCal  = nutritionResult.target ?? nutritionResult.tdee;
           const goalProt = nutritionResult.proteinG;
           const score    = getTodayScore(dailyWins);
-          const scoreColor = score === 3 ? '#4ade80' : score >= 1 ? '#fbbf24' : COLORS.muted;
+          const calPct   = Math.min(1, goalCal  > 0 ? log.calories / goalCal  : 0);
+          const protPct  = Math.min(1, goalProt > 0 ? log.protein  / goalProt : 0);
+          const headerInsight = !hasLogged ? null
+            : protPct >= 1 && calPct >= 1 ? { text: `Goals hit — ${score}/3 ✅`, color: '#4ade80' }
+            : protPct >= 1                 ? { text: `Protein hit — ${score}/3`,  color: '#4ade80' }
+            : score > 0                    ? { text: `${score}/3 wins today`,      color: '#fbbf24' }
+            : null;
           return (
-            <View style={{ marginBottom: 16, borderRadius: 14, backgroundColor: '#0e0e1c', borderWidth: 1, borderColor: '#ffffff0a', overflow: 'hidden' }}>
+            <View style={{ marginBottom: 16, borderRadius: 14, backgroundColor: '#0a2218', borderWidth: 1, borderColor: '#4ade8020', overflow: 'hidden' }}>
               {/* Header — tappable */}
               <TouchableOpacity
                 activeOpacity={0.85}
                 onPress={() => {
                   const toVal = nutritionExpanded ? 0 : 1;
                   setNutritionExpanded(!nutritionExpanded);
-                  Animated.timing(nutritionExpandAnim, { toValue: toVal, duration: 280, useNativeDriver: false }).start();
+                  Animated.parallel([
+                    Animated.spring(nutritionExpandAnim,  { toValue: toVal, useNativeDriver: false, friction: 9, tension: 55 }),
+                    Animated.timing(nutritionContentAnim, { toValue: toVal, duration: toVal ? 320 : 150, delay: toVal ? 120 : 0, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+                    Animated.timing(nutritionArrowAnim,   { toValue: toVal, duration: 250, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+                  ]).start();
                 }}
                 style={{ paddingVertical: 12, paddingHorizontal: 14 }}
               >
@@ -4273,36 +4371,62 @@ function Root() {
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
                   <Text style={{ color: '#ffffff80', fontSize: 12, fontWeight: '700' }}>🥗 Nutrition Today</Text>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <Text style={{ color: scoreColor, fontSize: 12, fontWeight: '700' }}>{score}/3{score === 3 ? ' ✅' : ''}</Text>
-                    <Text style={{ color: COLORS.muted, fontSize: 14, fontWeight: '700' }}>{nutritionExpanded ? '↑' : '→'}</Text>
+                    {headerInsight && !nutritionExpanded && <Text style={{ color: headerInsight.color, fontSize: 11, fontWeight: '600' }}>{headerInsight.text}</Text>}
+                    <Animated.Text style={{ color: COLORS.muted, fontSize: 14, fontWeight: '700', transform: [{ rotate: nutritionArrowAnim.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '-90deg'] }) }] }}>→</Animated.Text>
                   </View>
                 </View>
-                {/* Row 2: numbers */}
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 20 }}>
-                  <Text style={{ color: COLORS.text, fontSize: 14, fontWeight: '800' }}>🔥 <Text style={{ color: hasLogged ? COLORS.text : '#ffffff55' }}>{hasLogged ? log.calories.toLocaleString() : goalCal.toLocaleString()}</Text><Text style={{ color: COLORS.muted, fontSize: 12, fontWeight: '400' }}> kcal</Text></Text>
-                  <Text style={{ color: COLORS.text, fontSize: 14, fontWeight: '800' }}>💪 <Text style={{ color: hasLogged ? COLORS.text : '#ffffff55' }}>{hasLogged ? log.protein : goalProt}</Text><Text style={{ color: COLORS.muted, fontSize: 12, fontWeight: '400' }}>g</Text></Text>
-                </View>
+                {/* Row 2: numbers — hidden when expanded */}
+                {!nutritionExpanded && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 20 }}>
+                    <Text style={{ color: COLORS.text, fontSize: 14, fontWeight: '800' }}>🔥 <Text style={{ color: hasLogged ? COLORS.text : '#ffffff55' }}>{hasLogged ? log.calories.toLocaleString() : goalCal.toLocaleString()}</Text><Text style={{ color: COLORS.muted, fontSize: 12, fontWeight: '400' }}> kcal</Text></Text>
+                    <Text style={{ color: COLORS.text, fontSize: 14, fontWeight: '800' }}>💪 <Text style={{ color: hasLogged ? COLORS.text : '#ffffff55' }}>{hasLogged ? log.protein : goalProt}</Text><Text style={{ color: COLORS.muted, fontSize: 12, fontWeight: '400' }}>g</Text></Text>
+                  </View>
+                )}
               </TouchableOpacity>
 
               {/* Expandable content — same card, no gap */}
               <Animated.View style={{ maxHeight: nutritionExpandAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 700] }), overflow: 'hidden' }}>
+                <Animated.View style={{ opacity: nutritionContentAnim, transform: [{ translateY: nutritionContentAnim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }] }}>
                 <View style={{ height: 1, backgroundColor: '#ffffff08' }} />
                 <NutritionExpandedContent
                   onLog={() => {
-                    const today = new Date().toDateString();
-                    const l = nutritionLog.date === today ? nutritionLog : { calories: 0, protein: 0 };
+                    const DAY_NAMES_OL = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+                    const todayNameOL = DAY_NAMES_OL[new Date().getDay()];
+                    const todayIdxOL = plan?.findIndex(d => d.day.startsWith(todayNameOL)) ?? -1;
+                    const key = todayIdxOL !== -1 ? `w${currentWeek}_d${todayIdxOL + 1}` : `w${currentWeek}_d1`;
+                    const l = nutritionHistory[key] || { calories: 0, protein: 0 };
+                    setNutritionLogDate(key);
                     setNutritionLogInput({ calories: l.calories > 0 ? String(l.calories) : '', protein: l.protein > 0 ? String(l.protein) : '' });
                     setShowNutritionLogModal(true);
                   }}
                 />
+                </Animated.View>
               </Animated.View>
             </View>
           );
         })()}
 
+        <Animated.View style={{ flex: 1, transform: [{ translateX: weekSlideAnim }] }}>
         <FlatList
+          ref={planFlatListRef}
           data={plan}
           keyExtractor={(_, i) => i.toString()}
+          getItemLayout={(_, index) => ({ length: 116, offset: 116 * index, index })}
+          onScrollToIndexFailed={({ index }) => {
+            setTimeout(() => planFlatListRef.current?.scrollToIndex({ index, animated: false, viewPosition: 0.1 }), 100);
+          }}
+          onLayout={() => {
+            if (!plan || !planFlatListRef.current) return;
+            let activeWeek = null;
+            for (let w = 1; w <= TOTAL_WEEKS; w++) {
+              const hasIncomplete = plan.some(d => !d.day.includes('Rest') && !completedWorkouts[`${d.day}|${w}`]);
+              if (hasIncomplete) { activeWeek = w; break; }
+            }
+            const nextIdx = plan.findIndex(d => !d.day.includes('Rest') && !completedWorkouts[`${d.day}|${activeWeek}`]);
+            if (nextIdx > 0) {
+              planFlatListRef.current.scrollToIndex({ index: nextIdx, animated: false, viewPosition: 0.1 });
+            }
+          }}
           ListHeaderComponent={
             <View style={{ marginBottom: 8, marginTop: 0 }}>
               <Text style={{ color: COLORS.muted, fontSize: 11, fontWeight: '700', letterSpacing: 0.8, textTransform: 'uppercase' }}>Weekly Schedule</Text>
@@ -4310,24 +4434,97 @@ function Root() {
           }
           ListFooterComponent={<View style={{ height: 32 }} />}
           renderItem={({ item }) => {
-            const nextDay = plan?.find(d => {
-              if (d.day.includes('Rest')) return false;
-              const k = `${d.day}|${currentWeek}`;
-              return !completedWorkouts[k];
-            });
-            const isNext = item.day === nextDay?.day;
-            return (
-            <DayCard
-              item={item}
-              currentWeek={currentWeek}
-              logs={logs}
-              completedWorkouts={completedWorkouts}
-              isNext={isNext}
-              onPress={() => { setSelectedDay(item); setActiveExerciseIndex(0); setRestTimerRunning(false); setRestingForExercise(null); setScreen('day'); }}
-            />
-            );
+            // Find the actual next workout globally (lowest week with an incomplete day)
+            let activeWeek = null;
+            for (let w = 1; w <= TOTAL_WEEKS; w++) {
+              const hasIncomplete = plan?.some(d => !d.day.includes('Rest') && !completedWorkouts[`${d.day}|${w}`]);
+              if (hasIncomplete) { activeWeek = w; break; }
+            }
+            const nextDay = plan?.find(d => !d.day.includes('Rest') && !completedWorkouts[`${d.day}|${activeWeek}`]);
+            const isNext = !!nextDay && activeWeek === currentWeek && item.day === nextDay.day;
+            return (() => {
+              const planDayIdx = plan ? plan.findIndex(d => d.day === item.day) : -1;
+              const nutKey = planDayIdx !== -1 ? `w${currentWeek}_d${planDayIdx + 1}` : null;
+              const nutritionData = (nutKey && nutritionHistory[nutKey]) || null;
+              return (
+                <DayCard
+                  item={item}
+                  currentWeek={currentWeek}
+                  logs={logs}
+                  completedWorkouts={completedWorkouts}
+                  isNext={isNext}
+                  nutritionData={nutritionData}
+                  nutKey={nutKey}
+                  nutritionGoal={{ cal: nutritionResult?.target ?? nutritionResult?.tdee ?? 0, prot: nutritionResult?.proteinG ?? 0 }}
+                  expandedNutKey={expandedNutKey}
+                  setExpandedNutKey={setExpandedNutKey}
+                  onSaveNutrition={(cal, prot, carbs, fats) => {
+                    if (!nutKey) return;
+                    const updatedHistory = { ...nutritionHistory, [nutKey]: { calories: cal, protein: prot, carbs, fats } };
+                    setNutritionHistory(updatedHistory);
+                    if (user) updateDoc(doc(db, 'users', user.email), { nutritionHistory: updatedHistory });
+                    const protGoal = nutritionResult?.proteinG || 0;
+                    const calGoal = nutritionResult?.target ?? nutritionResult?.tdee ?? 0;
+                    setDailyWins(w => {
+                      const updated = { ...w, [nutKey]: { ...(w[nutKey] || {}), protein: protGoal > 0 && prot >= protGoal, calories: calGoal > 0 && cal >= calGoal * 0.9 && cal <= calGoal * 1.1 } };
+                      if (user) updateDoc(doc(db, 'users', user.email), { dailyWins: updated });
+                      return updated;
+                    });
+                  }}
+                  onPress={() => navigateToDay(item)}
+                />
+              );
+            })();
           }}
         />
+        </Animated.View>
+
+        {/* Update Weights Prompt */}
+        <Modal visible={showUpdateWeightsPrompt} transparent animationType="fade" onRequestClose={() => setShowUpdateWeightsPrompt(false)}>
+          <TouchableOpacity activeOpacity={1} style={{ flex: 1, backgroundColor: '#000000bb', justifyContent: 'flex-end' }} onPress={() => setShowUpdateWeightsPrompt(false)}>
+            <TouchableOpacity activeOpacity={1} onPress={() => {}}>
+              <View style={{ backgroundColor: COLORS.card, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 24, paddingTop: 16, paddingBottom: 36 }}>
+                <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: '#ffffff20', alignSelf: 'center', marginBottom: 20 }} />
+                <Text style={{ color: COLORS.text, fontSize: 20, fontWeight: '900', letterSpacing: -0.5, marginBottom: 6 }}>Update starting weights?</Text>
+                <Text style={{ color: COLORS.muted, fontSize: 13, lineHeight: 19, marginBottom: 20 }}>
+                  You haven't finished Week 1 yet. Want to update your suggested weights before you start?
+                </Text>
+                {suggestedWeights && (
+                  <View style={{ backgroundColor: '#0e0e22', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 20, borderWidth: 1, borderColor: '#ffffff10' }}>
+                    <Text style={{ color: COLORS.muted, fontSize: 10, fontWeight: '700', letterSpacing: 0.8, marginBottom: 8 }}>CURRENT WEIGHTS</Text>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                      {[['Bench', suggestedWeights.bench], ['Squat', suggestedWeights.squat], ['Deadlift', suggestedWeights.deadlift], ['OHP', suggestedWeights.ohp]].map(([label, w]) => (
+                        <View key={label} style={{ alignItems: 'center' }}>
+                          <Text style={{ color: COLORS.text, fontSize: 15, fontWeight: '800' }}>{w}</Text>
+                          <Text style={{ color: COLORS.muted, fontSize: 10 }}>{label}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                )}
+                <AnimatedPress
+                  style={{ backgroundColor: COLORS.accent, borderRadius: 14, paddingVertical: 15, alignItems: 'center', marginBottom: 10 }}
+                  onPress={() => { setShowUpdateWeightsPrompt(false); setShowWeightsModal(true); }}
+                  scaleDown={0.97}
+                >
+                  <Text style={{ color: '#000', fontWeight: '900', fontSize: 16 }}>Yes, update weights</Text>
+                </AnimatedPress>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 10 }}>
+                  <TouchableOpacity onPress={() => {
+                    const next = !weightsPromptDismissed;
+                    setWeightsPromptDismissed(next);
+                    if (user) updateDoc(doc(db, 'users', user.email), { weightsPromptDismissed: next });
+                  }} style={{ width: 18, height: 18, borderRadius: 4, borderWidth: 1.5, borderColor: weightsPromptDismissed ? COLORS.accent : '#ffffff40', backgroundColor: weightsPromptDismissed ? COLORS.accent : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+                    {weightsPromptDismissed && <Text style={{ color: '#000', fontSize: 11, fontWeight: '900', lineHeight: 13 }}>✓</Text>}
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => setShowUpdateWeightsPrompt(false)}>
+                    <Text style={{ color: COLORS.muted, fontSize: 14 }}>No, keep current weights</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </Modal>
 
         {/* Weights Setup Modal */}
         <Modal visible={showWeightsModal} transparent animationType="slide" onRequestClose={() => setShowWeightsModal(false)}>
@@ -4335,81 +4532,97 @@ function Root() {
             <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 0 }}>
               <TouchableOpacity activeOpacity={1} onPress={() => {}}>
                 <View style={{ backgroundColor: COLORS.card, borderTopLeftRadius: 28, borderTopRightRadius: 28 }}>
-                  <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} style={{ maxHeight: screenHeight * 0.9 }} contentContainerStyle={{ paddingHorizontal: 22, paddingTop: 12, paddingBottom: 36 }}>
+                  <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} style={{ maxHeight: screenHeight * 0.9 }} contentContainerStyle={{ paddingHorizontal: 18, paddingTop: 8, paddingBottom: 20 }}>
                   {/* Handle */}
-                  <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: '#ffffff20', alignSelf: 'center', marginBottom: 20 }} />
+                  <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: '#ffffff20', alignSelf: 'center', marginBottom: 10 }} />
 
-                  <Text style={{ color: COLORS.muted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 6 }}>ALMOST THERE</Text>
-                  <Text style={{ color: COLORS.text, fontSize: 22, fontWeight: '900', letterSpacing: -0.5, marginBottom: 6 }}>Set your starting weights</Text>
-                  <Text style={{ color: COLORS.muted, fontSize: 13, lineHeight: 18, marginBottom: 20 }}>
-                    Helps us recommend the right weights from day one. Update any time.
-                  </Text>
+                  <Text style={{ color: COLORS.text, fontSize: 18, fontWeight: '900', letterSpacing: -0.5, marginBottom: 10 }}>Set your starting weights</Text>
 
-                  <View style={{ gap: 6, marginBottom: 16 }}>
+                  <View style={{ gap: 6, marginBottom: 10 }}>
                     {[
                       { key: 'recommended', icon: '🔥', title: 'Recommended', desc: "Auto-selected for you", badge: 'DEFAULT' },
                       { key: 'maxes',       icon: '💪', title: 'Enter your maxes', desc: 'Bench · Squat · Deadlift 1RM' },
-                      { key: 'recent',      icon: '📊', title: 'Enter a recent set', desc: 'Last weight & reps lifted' },
                     ].map(({ key, icon, title, desc, badge }) => {
                       const active = weightSetupMode === key;
                       return (
                         <TouchableOpacity
                           key={key}
                           onPress={() => setWeightSetupMode(key)}
-                          style={{ backgroundColor: active ? '#ffffff0d' : COLORS.surface, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, borderWidth: active ? 1.5 : 1, borderColor: active ? '#ffffff35' : '#ffffff10', flexDirection: 'row', alignItems: 'center', gap: 10 }}
+                          style={{ backgroundColor: active ? '#ffffff0d' : COLORS.surface, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 11, borderWidth: active ? 1.5 : 1, borderColor: active ? '#ffffff35' : '#ffffff10', flexDirection: 'row', alignItems: 'center', gap: 12 }}
                         >
-                          <Text style={{ fontSize: 16 }}>{icon}</Text>
+                          <Text style={{ fontSize: 20 }}>{icon}</Text>
                           <View style={{ flex: 1 }}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                              <Text style={{ color: active ? COLORS.text : COLORS.muted, fontWeight: '700', fontSize: 12 }}>{title}</Text>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
+                              <Text style={{ color: active ? COLORS.text : COLORS.muted, fontWeight: '700', fontSize: 14 }}>{title}</Text>
                               {badge && <View style={{ backgroundColor: COLORS.accent + '20', borderRadius: 4, paddingHorizontal: 5, paddingVertical: 1 }}><Text style={{ color: COLORS.accent, fontSize: 8, fontWeight: '800' }}>{badge}</Text></View>}
                             </View>
-                            <Text style={{ color: COLORS.muted, fontSize: 10, marginTop: 1 }}>{desc}</Text>
+                            <Text style={{ color: COLORS.muted, fontSize: 11, marginTop: 1 }}>{desc}</Text>
                           </View>
-                          <View style={{ width: 15, height: 15, borderRadius: 8, borderWidth: 1.5, borderColor: active ? '#ffffff50' : '#ffffff20', alignItems: 'center', justifyContent: 'center', backgroundColor: active ? '#ffffff15' : 'transparent' }}>
-                            {active && <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: COLORS.text }} />}
+                          <View style={{ width: 18, height: 18, borderRadius: 9, borderWidth: 1.5, borderColor: active ? '#ffffff50' : '#ffffff20', alignItems: 'center', justifyContent: 'center', backgroundColor: active ? '#ffffff15' : 'transparent' }}>
+                            {active && <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.text }} />}
                           </View>
                         </TouchableOpacity>
                       );
                     })}
                   </View>
 
+                  {/* Recommended explanation */}
+                  {weightSetupMode === 'recommended' && (() => {
+                    const bw = parseFloat(profileForm.weightLbs) || 160;
+                    const level = profileForm.fitnessLevel || 'Beginner';
+                    const ratioMap = { Beginner: 0.50, Intermediate: 0.85, Advanced: 1.25 };
+                    const ratio = ratioMap[level] || 0.50;
+                    return (
+                      <View style={{ backgroundColor: '#0e0e22', borderRadius: 12, padding: 12, marginBottom: 10, borderWidth: 1, borderColor: '#ffffff10', gap: 8 }}>
+                        <Text style={{ color: COLORS.accent, fontSize: 10, fontWeight: '800', letterSpacing: 0.8 }}>HOW IT'S CALCULATED</Text>
+                        <Text style={{ color: COLORS.muted, fontSize: 12, lineHeight: 18 }}>
+                          Your profile shows <Text style={{ color: COLORS.text, fontWeight: '700' }}>{bw} lbs</Text> bodyweight. We estimate your bench 1-rep max at <Text style={{ color: COLORS.text, fontWeight: '700' }}>{bw} × {ratio} = {Math.round(bw * ratio)} lbs</Text>, then take <Text style={{ color: COLORS.text, fontWeight: '700' }}>70%</Text> as your working weight.
+                        </Text>
+                        <View>
+                          <Text style={{ color: COLORS.muted, fontSize: 11, fontWeight: '700', letterSpacing: 0.6, marginBottom: 6 }}>EXPERIENCE LEVEL</Text>
+                          <View style={{ flexDirection: 'row', gap: 6 }}>
+                            {[
+                              { val: 'Beginner',     sub: '< 1 year' },
+                              { val: 'Intermediate', sub: '1–3 years' },
+                              { val: 'Advanced',     sub: '3+ years' },
+                            ].map(({ val, sub }) => {
+                              const active = level === val;
+                              return (
+                                <TouchableOpacity
+                                  key={val}
+                                  onPress={() => {
+                                    setProfileForm(f => ({ ...f, fitnessLevel: val }));
+                                    if (user) updateDoc(doc(db, 'users', user.email), { 'profile.fitnessLevel': val });
+                                  }}
+                                  style={{ flex: 1, alignItems: 'center', paddingVertical: 8, backgroundColor: active ? COLORS.accent + '20' : '#ffffff08', borderRadius: 10, borderWidth: 1, borderColor: active ? COLORS.accent + '60' : '#ffffff12' }}
+                                >
+                                  <Text style={{ color: active ? COLORS.accent : COLORS.muted, fontSize: 12, fontWeight: '700' }}>{val}</Text>
+                                  <Text style={{ color: active ? COLORS.accent + 'aa' : '#ffffff25', fontSize: 10, marginTop: 2 }}>{sub}</Text>
+                                </TouchableOpacity>
+                              );
+                            })}
+                          </View>
+                        </View>
+                        <Text style={{ color: '#ffffff30', fontSize: 11, lineHeight: 16 }}>
+                          Squat and deadlift use higher multipliers; OHP uses a lower one. Adjust freely before each set.
+                        </Text>
+                      </View>
+                    );
+                  })()}
+
                   {/* Maxes inputs */}
                   {weightSetupMode === 'maxes' && (
-                    <View style={{ gap: 8, marginBottom: 20 }}>
+                    <View style={{ gap: 6, marginBottom: 10 }}>
                       {[['bench', 'Bench Press'], ['squat', 'Back Squat'], ['deadlift', 'Deadlift']].map(([field, label]) => (
-                        <View key={field} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#0e0e22', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, borderWidth: 1, borderColor: '#ffffff12' }}>
+                        <View key={field} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#0e0e22', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: '#ffffff12' }}>
                           <Text style={{ color: COLORS.muted, fontSize: 13, fontWeight: '600', flex: 1 }}>{label}</Text>
-                          <TextInput style={{ color: COLORS.text, fontSize: 16, fontWeight: '700', textAlign: 'right', minWidth: 60 }} placeholder="0" placeholderTextColor={COLORS.muted + '80'} keyboardType="numeric" value={userMaxes[field]} onChangeText={v => setUserMaxes(m => ({ ...m, [field]: v }))} />
-                          <Text style={{ color: COLORS.muted, fontSize: 12, marginLeft: 6 }}>lbs</Text>
+                          <TextInput style={{ color: COLORS.text, fontSize: 15, fontWeight: '700', textAlign: 'right', minWidth: 55 }} placeholder="0" placeholderTextColor={COLORS.muted + '80'} keyboardType="numeric" value={userMaxes[field]} onChangeText={v => setUserMaxes(m => ({ ...m, [field]: v }))} />
+                          <Text style={{ color: COLORS.muted, fontSize: 12, marginLeft: 5 }}>lbs</Text>
                         </View>
                       ))}
                     </View>
                   )}
 
-                  {/* Recent set inputs */}
-                  {weightSetupMode === 'recent' && (
-                    <View style={{ gap: 8, marginBottom: 20 }}>
-                      <View style={{ flexDirection: 'row', gap: 8 }}>
-                        {['Bench Press', 'Squat', 'Deadlift'].map(ex => (
-                          <TouchableOpacity key={ex} onPress={() => setRecentSet(s => ({ ...s, exercise: ex }))} style={{ flex: 1, alignItems: 'center', paddingVertical: 8, backgroundColor: recentSet.exercise === ex ? COLORS.accent + '20' : '#0e0e22', borderRadius: 10, borderWidth: 1, borderColor: recentSet.exercise === ex ? COLORS.accent + '50' : '#ffffff10' }}>
-                            <Text style={{ color: recentSet.exercise === ex ? COLORS.accent : COLORS.muted, fontSize: 11, fontWeight: '700' }}>{ex}</Text>
-                          </TouchableOpacity>
-                        ))}
-                      </View>
-                      <View style={{ flexDirection: 'row', gap: 8 }}>
-                        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: '#0e0e22', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, borderWidth: 1, borderColor: '#ffffff12' }}>
-                          <Text style={{ color: COLORS.muted, fontSize: 12, flex: 1 }}>Weight</Text>
-                          <TextInput style={{ color: COLORS.text, fontSize: 16, fontWeight: '700', textAlign: 'right', minWidth: 50 }} placeholder="135" placeholderTextColor={COLORS.muted + '80'} keyboardType="numeric" value={recentSet.weight} onChangeText={v => setRecentSet(s => ({ ...s, weight: v }))} />
-                          <Text style={{ color: COLORS.muted, fontSize: 12, marginLeft: 5 }}>lbs</Text>
-                        </View>
-                        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: '#0e0e22', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, borderWidth: 1, borderColor: '#ffffff12' }}>
-                          <Text style={{ color: COLORS.muted, fontSize: 12, flex: 1 }}>Reps</Text>
-                          <TextInput style={{ color: COLORS.text, fontSize: 16, fontWeight: '700', textAlign: 'right', minWidth: 50 }} placeholder="8" placeholderTextColor={COLORS.muted + '80'} keyboardType="numeric" value={recentSet.reps} onChangeText={v => setRecentSet(s => ({ ...s, reps: v }))} />
-                        </View>
-                      </View>
-                    </View>
-                  )}
 
                   {/* Suggested starting weights */}
                   {(() => {
@@ -4418,9 +4631,9 @@ function Root() {
                     const round5 = v => Math.max(5, Math.round(v / 5) * 5);
 
                     const ratios = {
-                      Beginner:     { bench: 0.45, squat: 0.60, deadlift: 0.70, ohp: 0.28 },
-                      Intermediate: { bench: 0.70, squat: 1.00, deadlift: 1.20, ohp: 0.45 },
-                      Advanced:     { bench: 1.00, squat: 1.50, deadlift: 1.75, ohp: 0.62 },
+                      Beginner:     { bench: 0.50, squat: 0.65, deadlift: 0.80, ohp: 0.32 },
+                      Intermediate: { bench: 0.85, squat: 1.25, deadlift: 1.50, ohp: 0.55 },
+                      Advanced:     { bench: 1.25, squat: 1.75, deadlift: 2.00, ohp: 0.80 },
                     };
                     const r = ratios[level] || ratios.Beginner;
 
@@ -4432,15 +4645,6 @@ function Root() {
                       dead1rm  = parseFloat(userMaxes.deadlift) || bw * r.deadlift;
                       ohp1rm   = bench1rm * 0.62;
                       basis    = 'your 1-rep max';
-                    } else if (weightSetupMode === 'recent' && recentSet.weight && recentSet.reps) {
-                      const w = parseFloat(recentSet.weight);
-                      const rp = parseInt(recentSet.reps);
-                      const est = w * (1 + rp / 30); // Epley formula
-                      bench1rm = recentSet.exercise === 'Bench Press' ? est : bw * r.bench;
-                      squat1rm = recentSet.exercise === 'Squat'       ? est : bw * r.squat;
-                      dead1rm  = recentSet.exercise === 'Deadlift'    ? est : bw * r.deadlift;
-                      ohp1rm   = bench1rm * 0.62;
-                      basis    = `your recent ${recentSet.exercise.toLowerCase()} set`;
                     } else {
                       bench1rm = bw * r.bench;
                       squat1rm = bw * r.squat;
@@ -4449,27 +4653,25 @@ function Root() {
                       basis    = 'your bodyweight & experience';
                     }
 
-                    // Working weight = 70% of 1RM (hypertrophy range)
                     const lifts = [
-                      { label: 'Bench Press',    w: round5(bench1rm * 0.70) },
-                      { label: 'Back Squat',     w: round5(squat1rm * 0.70) },
-                      { label: 'Deadlift',       w: round5(dead1rm  * 0.65) },
-                      { label: 'Overhead Press', w: round5(ohp1rm   * 0.70) },
+                      { label: 'Bench',    w: round5(bench1rm * 0.70) },
+                      { label: 'Squat',    w: round5(squat1rm * 0.70) },
+                      { label: 'Deadlift', w: round5(dead1rm  * 0.65) },
+                      { label: 'OHP',      w: round5(ohp1rm   * 0.70) },
                     ];
 
                     return (
-                      <View style={{ backgroundColor: '#0e0e22', borderRadius: 14, padding: 14, marginBottom: 16, borderWidth: 1, borderColor: '#ffffff10' }}>
-                        <Text style={{ color: COLORS.accent, fontSize: 10, fontWeight: '800', letterSpacing: 0.8, marginBottom: 10 }}>🎯  SUGGESTED WEEK 1 STARTING WEIGHTS</Text>
-                        {lifts.map(({ label, w }, idx) => (
-                          <View key={label} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 6, borderTopWidth: idx === 0 ? 0 : 1, borderTopColor: '#ffffff08' }}>
-                            <Text style={{ color: COLORS.muted, fontSize: 13 }}>{label}</Text>
-                            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 3 }}>
-                              <Text style={{ color: COLORS.text, fontSize: 16, fontWeight: '800' }}>{w}</Text>
-                              <Text style={{ color: COLORS.muted, fontSize: 11 }}>lbs</Text>
+                      <View style={{ backgroundColor: '#0e0e22', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, marginBottom: 12, borderWidth: 1, borderColor: '#ffffff10' }}>
+                        <Text style={{ color: COLORS.accent, fontSize: 9, fontWeight: '800', letterSpacing: 0.8, marginBottom: 8 }}>🎯  SUGGESTED WEEK 1 STARTING WEIGHTS</Text>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                          {lifts.map(({ label, w }) => (
+                            <View key={label} style={{ alignItems: 'center' }}>
+                              <Text style={{ color: COLORS.text, fontSize: 15, fontWeight: '800' }}>{w}</Text>
+                              <Text style={{ color: COLORS.muted, fontSize: 10 }}>{label}</Text>
                             </View>
-                          </View>
-                        ))}
-                        <Text style={{ color: COLORS.muted, fontSize: 11, marginTop: 8, opacity: 0.6 }}>Based on {basis} · adjust freely before each set</Text>
+                          ))}
+                        </View>
+                        <Text style={{ color: COLORS.muted, fontSize: 10, marginTop: 7, opacity: 0.6 }}>Based on {basis} · adjust freely before each set</Text>
                       </View>
                     );
                   })()}
@@ -4479,9 +4681,9 @@ function Root() {
                     const level = profileForm.fitnessLevel || 'Beginner';
                     const round5 = v => Math.max(5, Math.round(v / 5) * 5);
                     const ratios = {
-                      Beginner:     { bench: 0.45, squat: 0.60, deadlift: 0.70, ohp: 0.28 },
-                      Intermediate: { bench: 0.70, squat: 1.00, deadlift: 1.20, ohp: 0.45 },
-                      Advanced:     { bench: 1.00, squat: 1.50, deadlift: 1.75, ohp: 0.62 },
+                      Beginner:     { bench: 0.50, squat: 0.65, deadlift: 0.80, ohp: 0.32 },
+                      Intermediate: { bench: 0.85, squat: 1.25, deadlift: 1.50, ohp: 0.55 },
+                      Advanced:     { bench: 1.25, squat: 1.75, deadlift: 2.00, ohp: 0.80 },
                     };
                     const r = ratios[level] || ratios.Beginner;
                     let bench1rm, squat1rm, dead1rm, ohp1rm;
@@ -4489,14 +4691,6 @@ function Root() {
                       bench1rm = parseFloat(userMaxes.bench) || bw * r.bench;
                       squat1rm = parseFloat(userMaxes.squat) || bw * r.squat;
                       dead1rm  = parseFloat(userMaxes.deadlift) || bw * r.deadlift;
-                      ohp1rm   = bench1rm * 0.62;
-                    } else if (weightSetupMode === 'recent' && recentSet.weight && recentSet.reps) {
-                      const w = parseFloat(recentSet.weight);
-                      const rp = parseInt(recentSet.reps);
-                      const est = w * (1 + rp / 30);
-                      bench1rm = recentSet.exercise === 'Bench Press' ? est : bw * r.bench;
-                      squat1rm = recentSet.exercise === 'Squat'       ? est : bw * r.squat;
-                      dead1rm  = recentSet.exercise === 'Deadlift'    ? est : bw * r.deadlift;
                       ohp1rm   = bench1rm * 0.62;
                     } else {
                       bench1rm = bw * r.bench;
@@ -4535,7 +4729,9 @@ function Root() {
               <TouchableOpacity activeOpacity={1} onPress={() => {}}>
                 <View style={{ backgroundColor: COLORS.card, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 22, paddingTop: 16, paddingBottom: 36 }}>
                   <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: '#ffffff20', alignSelf: 'center', marginBottom: 20 }} />
-                  <Text style={{ color: COLORS.text, fontSize: 18, fontWeight: '900', letterSpacing: -0.4, marginBottom: 4 }}>Log today's intake</Text>
+                  <Text style={{ color: COLORS.text, fontSize: 18, fontWeight: '900', letterSpacing: -0.4, marginBottom: 4 }}>
+                    {nutritionLogDate ? `Log intake — ${nutritionLogDate.replace('w', 'Week ').replace('_d', ', Day ')}` : "Log intake"}
+                  </Text>
                   <Text style={{ color: COLORS.muted, fontSize: 13, marginBottom: 20 }}>Cumulative totals for the day — update any time.</Text>
                   <View style={{ gap: 10, marginBottom: 20 }}>
                     {[
@@ -4561,14 +4757,19 @@ function Root() {
                     style={{ backgroundColor: COLORS.accent, borderRadius: 14, paddingVertical: 15, alignItems: 'center', marginBottom: 10 }}
                     scaleDown={0.97}
                     onPress={() => {
-                      const today = new Date().toDateString();
+                      const logDate = nutritionLogDate;
                       const cal  = parseInt(nutritionLogInput.calories) || 0;
                       const prot = parseInt(nutritionLogInput.protein)  || 0;
-                      setNutritionLog({ calories: cal, protein: prot, date: today });
-                      setNutritionHistory(h => ({ ...h, [today]: { calories: cal, protein: prot } }));
+                      const updatedHistory = { ...nutritionHistory, [logDate]: { calories: cal, protein: prot } };
+                      setNutritionHistory(updatedHistory);
+                      if (user) updateDoc(doc(db, 'users', user.email), { nutritionHistory: updatedHistory });
                       const protGoal = nutritionResult?.proteinG || 0;
                       const calGoal  = nutritionResult?.target ?? nutritionResult?.tdee ?? 0;
-                      setDailyWins(w => ({ ...w, [today]: { ...(w[today] || {}), protein: protGoal > 0 && prot >= protGoal, calories: calGoal > 0 && cal >= calGoal * 0.9 && cal <= calGoal * 1.1 } }));
+                      setDailyWins(w => {
+                        const updated = { ...w, [logDate]: { ...(w[logDate] || {}), protein: protGoal > 0 && prot >= protGoal, calories: calGoal > 0 && cal >= calGoal * 0.9 && cal <= calGoal * 1.1 } };
+                        if (user) updateDoc(doc(db, 'users', user.email), { dailyWins: updated });
+                        return updated;
+                      });
                       setShowNutritionLogModal(false);
                     }}
                   >
@@ -4583,7 +4784,7 @@ function Root() {
           </TouchableOpacity>
         </Modal>
 
-      </View>
+      </Animated.View>
     );
   }
 
@@ -4623,14 +4824,14 @@ function Root() {
       : selectedDay.day.split('–').map(s => s.trim())[1] || selectedDay.day;
 
     return (
-      <View style={[styles.container, { paddingTop: 80 }]}>
+      <Animated.View style={[styles.container, { paddingTop: 80 }, { transform: [{ translateX: dayEnterAnim.interpolate({ inputRange: [0, 1], outputRange: [daySlideFromLeft ? -screenWidth : screenWidth, 0] }) }] }]}>
         <LogoutBtn />
-        <TouchableOpacity onPress={() => setScreen('plan')} style={[styles.backBtn, { position: 'absolute', top: 20, left: 16, zIndex: 10 }]}>
+        <TouchableOpacity onPress={() => { setPlanSlideFromLeft(true); setScreen('plan'); }} style={[styles.backBtn, { position: 'absolute', top: 20, left: 16, zIndex: 10 }]}>
           <Text style={styles.backText}>‹</Text>
         </TouchableOpacity>
 
         {/* Action-driven header */}
-        <Animated.View style={{ marginTop: 8, marginBottom: 14, opacity: dayEnterAnim, transform: [{ translateY: dayEnterAnim.interpolate({ inputRange: [0, 1], outputRange: [18, 0] }) }] }}>
+        <View style={{ marginTop: 8, marginBottom: 14 }}>
           {/* Context badge */}
           {isToday && !isRestDay && (
             <View style={{ flexDirection: 'row', marginBottom: 10 }}>
@@ -4703,37 +4904,8 @@ function Root() {
               Rest is where the muscle is built.
             </Text>
           )}
-        </Animated.View>
+        </View>
 
-        {/* Week Tracker + Progress Ring row */}
-        {!isRestDay && (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-            <TouchableOpacity activeOpacity={0.85} onPress={() => { setWeekDetailFrom('day'); setScreen('weekDetail'); }}
-              style={{ flex: 1, backgroundColor: COLORS.surface, borderWidth: 1, borderColor: '#ffffff08', borderTopColor: '#ffffff30', borderRadius: 16, padding: 14 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
-                  <Text style={{ color: COLORS.text, fontWeight: 'bold', fontSize: 15 }}>Week {currentWeek}</Text>
-                  <Text style={{ color: COLORS.muted, fontSize: 12 }}>of {TOTAL_WEEKS}</Text>
-                </View>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <TouchableOpacity onPress={() => setCurrentWeek(w => Math.max(1, w - 1))} style={{ width: 24, height: 24, borderRadius: 5, backgroundColor: '#2a2a4a', alignItems: 'center', justifyContent: 'center', opacity: currentWeek > 1 ? 1 : 0.35 }}>
-                    <Text style={{ color: COLORS.text, fontSize: 15, fontWeight: '700', lineHeight: 19 }}>‹</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={() => setCurrentWeek(w => Math.min(TOTAL_WEEKS, w + 1))} style={{ width: 24, height: 24, borderRadius: 5, backgroundColor: '#2a2a4a', alignItems: 'center', justifyContent: 'center', opacity: currentWeek < TOTAL_WEEKS ? 1 : 0.35 }}>
-                    <Text style={{ color: COLORS.text, fontSize: 15, fontWeight: '700', lineHeight: 19 }}>›</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-              <AnimatedProgressBar
-                progress={((currentWeek - 1) / TOTAL_WEEKS + (workoutExercises.filter(e => (logs[logKey(selectedDay.day, e)] || []).some(en => en.programWeek === currentWeek)).length / Math.max(workoutExercises.length, 1)) / TOTAL_WEEKS)}
-                height={4} color={COLORS.accent} trackColor="#2a2a4a" style={{ marginBottom: 6 }}
-              />
-              <Text style={{ color: COLORS.muted, fontSize: 11 }}>
-                <Text style={{ color: COLORS.text, fontWeight: '600' }}>{loggedCount} / {totalExercises}</Text> Exercises Logged
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
 
 
         <View style={{ flex: 1 }}>
@@ -4779,18 +4951,15 @@ function Root() {
                       const sr = parseSetsReps(item);
                       const count = sr ? parseInt(sr.sets) : 3;
                       const lastLogs = logs[logKey(selectedDay.day, item)] || [];
-                      const weekEntryCard = lastLogs.find(en => en.programWeek === currentWeek);
                       const lastEntry = lastLogs.length > 0 ? lastLogs[lastLogs.length - 1] : null;
                       const fallbackReps = lastEntry?.reps || (sr ? sr.reps.split('-')[0] : '');
                       const suggestedW = calculateSuggestedWeight(cleanExerciseName(item), currentWeek, suggestedWeights, profileForm.fitnessLevel);
-                      const set1Weight = lastEntry?.sets?.[0]?.weight || lastEntry?.weight || suggestedW;
                       setSessionSets(Array.from({ length: count }, (_, idx) => ({
-                        weight: lastEntry?.sets?.[idx]?.weight || lastEntry?.weight || suggestedW,
+                        weight: lastEntry?.sets?.[idx]?.weight || lastEntry?.weight || suggestedW || '',
                         reps: lastEntry?.sets?.[idx]?.reps || fallbackReps,
                         completed: false,
                       })));
                       setScreen('progress');
-                      if (set1Weight && !weekEntryCard) { savedDismissRef.current = { index: null }; setWeightPickerIndex(0); setWeightPickerVisible(true); }
                     }
                   }}
                   activeOpacity={(isStretching || isFoamRolling || isRestDay) ? 1 : 0.75}
@@ -4931,18 +5100,26 @@ function Root() {
 
           const markDone = () => {
             if (done) { setShowDayComplete(true); return; }
-            const isFirstWorkout = Object.keys(completedWorkouts).length === 0;
             const updated = { ...completedWorkouts, [wKey]: true };
             setCompletedWorkouts(updated);
             if (user) updateDoc(doc(db, 'users', user.email), { completedWorkouts: updated });
             setShowCompleteButton(false);
-            if (isFirstWorkout && nutritionResult) setShowNutritionNudge(true);
+            const dayIdx = plan ? plan.findIndex(d => d.day === selectedDay?.day) : -1;
+            const dayNutKey = dayIdx !== -1 ? `w${currentWeek}_d${dayIdx + 1}` : null;
+            if (nutritionResult && dayNutKey) {
+              const hasNut = nutritionHistory[dayNutKey] && (nutritionHistory[dayNutKey].calories > 0 || nutritionHistory[dayNutKey].protein > 0);
+              if (!hasNut) setShowNutritionNudge(true);
+            }
             setShowDayComplete(true);
             setRestTimerRunning(false);
             setRestTimerRemaining(0);
             setRestingForExercise(null);
-            const today = new Date().toDateString();
-            setDailyWins(w => ({ ...w, [today]: { ...(w[today] || {}), workout: true } }));
+            const winKey = dayNutKey || new Date().toDateString();
+            setDailyWins(w => {
+              const updated = { ...w, [winKey]: { ...(w[winKey] || {}), workout: true } };
+              if (user) updateDoc(doc(db, 'users', user.email), { dailyWins: updated });
+              return updated;
+            });
             setTimeout(() => {
               setWorkoutChip(true);
               Animated.parallel([
@@ -5092,7 +5269,7 @@ function Root() {
           );
         })()}
 
-      </View>
+      </Animated.View>
     );
   }
 
@@ -5135,87 +5312,59 @@ function Root() {
     );
     const exIdx = dayExercises.indexOf(selectedExercise);
 
-    function resetSetsForWeek(newWeek) {
-      const sr = parseSetsReps(selectedExercise);
-      const count = sr ? parseInt(sr.sets) : 3;
-      const allLogs = logs[logKey(selectedDay.day, selectedExercise)] || [];
-      const weekEntry = allLogs.find(en =>
-        en.programWeek === newWeek
-      );
-      const lastEntry = weekEntry || (allLogs.length > 0 ? allLogs[allLogs.length - 1] : null);
-      const fallbackReps = lastEntry?.reps || (sr ? sr.reps.split('-')[0] : '');
-      const suggestedW = calculateSuggestedWeight(cleanExerciseName(selectedExercise), newWeek, suggestedWeights, profileForm.fitnessLevel);
-      const set1Weight = lastEntry?.sets?.[0]?.weight || lastEntry?.weight || suggestedW;
-      setSessionSets(Array.from({ length: count }, (_, idx) => ({
-        weight: lastEntry?.sets?.[idx]?.weight || lastEntry?.weight || suggestedW,
-        reps: lastEntry?.sets?.[idx]?.reps || fallbackReps,
-        completed: false,
-      })));
-      if (set1Weight && !weekEntry) { savedDismissRef.current = { index: null }; setWeightPickerIndex(0); setWeightPickerVisible(true); }
-    }
-
-    function navigateExercise(newIdx) {
+    function navigateExercise(newIdx, direction = 1) {
       const newEx = dayExercises[newIdx];
-      setSelectedExercise(newEx);
-      setActiveExerciseIndex(newIdx);
       const sr = parseSetsReps(newEx);
       const count = sr ? parseInt(sr.sets) : 3;
       const lastLogs = logs[logKey(selectedDay.day, newEx)] || [];
-      const weekEntryNav = lastLogs.find(en => en.programWeek === currentWeek);
       const lastEntry = lastLogs.length > 0 ? lastLogs[lastLogs.length - 1] : null;
       const fallbackReps = lastEntry?.reps || (sr ? sr.reps.split('-')[0] : '');
       const suggestedW = calculateSuggestedWeight(cleanExerciseName(newEx), currentWeek, suggestedWeights, profileForm.fitnessLevel);
-      const set1Weight = lastEntry?.sets?.[0]?.weight || lastEntry?.weight || suggestedW;
+      pendingSlideDirection.current = direction;
+      exerciseSlideAnim.setValue(direction * screenWidth);
       setSessionSets(Array.from({ length: count }, (_, idx) => ({
-        weight: lastEntry?.sets?.[idx]?.weight || lastEntry?.weight || suggestedW,
+        weight: lastEntry?.sets?.[idx]?.weight || lastEntry?.weight || suggestedW || '',
         reps: lastEntry?.sets?.[idx]?.reps || fallbackReps,
         completed: false,
       })));
-      if (set1Weight && !weekEntryNav) { savedDismissRef.current = { index: null }; setWeightPickerIndex(0); setWeightPickerVisible(true); }
+      setSelectedExercise(newEx);
+      setActiveExerciseIndex(newIdx);
     }
 
     return (
-      <View style={styles.container}>
+      <Animated.View style={[styles.container, { transform: [{ translateX: progressEnterAnim.interpolate({ inputRange: [0, 1], outputRange: [screenWidth, 0] }) }] }]}>
         <LogoutBtn />
         <View style={{ flexDirection: 'row' }}>
-          <TouchableOpacity onPress={() => setScreen('day')} style={styles.backBtn}>
+          <TouchableOpacity onPress={() => { setDaySlideFromLeft(true); setScreen('day'); }} style={styles.backBtn}>
             <Text style={styles.backText}>‹</Text>
           </TouchableOpacity>
         </View>
 
-        <ScrollView contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
-          {/* Week selector */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: COLORS.deep, borderWidth: 1, borderColor: '#ffffff06', borderTopColor: '#ffffff28', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12, marginBottom: 14 }}>
-            <TouchableOpacity onPress={() => { const w = Math.max(1, currentWeek - 1); setCurrentWeek(w); resetSetsForWeek(w); }} style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: '#2a2a4a', alignItems: 'center', justifyContent: 'center', opacity: currentWeek > 1 ? 1 : 0.35 }}>
-              <Text style={{ color: COLORS.text, fontSize: 18, fontWeight: '700', lineHeight: 22 }}>‹</Text>
-            </TouchableOpacity>
-            <Text style={{ color: COLORS.text, fontWeight: 'bold', fontSize: 15 }}>
-              Week <Text style={{ color: COLORS.text }}>{currentWeek}</Text>
-              <Text style={{ color: COLORS.muted, fontWeight: 'normal', fontSize: 13 }}> of {TOTAL_WEEKS}</Text>
-            </Text>
-            <TouchableOpacity onPress={() => { const w = Math.min(TOTAL_WEEKS, currentWeek + 1); setCurrentWeek(w); resetSetsForWeek(w); }} style={{ width: 28, height: 28, borderRadius: 6, backgroundColor: '#2a2a4a', alignItems: 'center', justifyContent: 'center', opacity: currentWeek < TOTAL_WEEKS ? 1 : 0.35 }}>
-              <Text style={{ color: COLORS.text, fontSize: 18, fontWeight: '700', lineHeight: 22 }}>›</Text>
-            </TouchableOpacity>
-          </View>
+        {/* Clipping container — clips the sliding content */}
+        <View style={{ flex: 1, overflow: 'hidden', backgroundColor: '#0f0f0f', marginTop: -16 }}>
+          <Animated.View style={{ flex: 1, backgroundColor: '#0f0f0f', transform: [{ translateX: exerciseSlideAnim }] }}>
 
-          {/* Exercise selector */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: COLORS.deep, borderWidth: 1, borderColor: '#ffffff06', borderTopColor: '#ffffff28', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12, marginBottom: 14 }}>
-            <TouchableOpacity onPress={() => exIdx > 0 && navigateExercise(exIdx - 1)} style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: '#2a2a4a', alignItems: 'center', justifyContent: 'center', opacity: exIdx > 0 ? 1 : 0.35 }}>
-              <Text style={{ color: COLORS.text, fontSize: 18, fontWeight: '700', lineHeight: 22 }}>‹</Text>
-            </TouchableOpacity>
-            <Text style={{ color: COLORS.text, fontWeight: 'bold', fontSize: 15, flex: 1, textAlign: 'center', paddingHorizontal: 8 }} numberOfLines={1}>
-              <Text style={{ color: COLORS.text }}>{cleanExerciseName(selectedExercise)}</Text>
-              <Text style={{ color: COLORS.muted, fontWeight: 'normal', fontSize: 13 }}> ({exIdx + 1}/{dayExercises.length})</Text>
-            </Text>
-            <TouchableOpacity onPress={() => exIdx < dayExercises.length - 1 && navigateExercise(exIdx + 1)} style={{ width: 28, height: 28, borderRadius: 6, backgroundColor: '#2a2a4a', alignItems: 'center', justifyContent: 'center', opacity: exIdx < dayExercises.length - 1 ? 1 : 0.35 }}>
-              <Text style={{ color: COLORS.text, fontSize: 18, fontWeight: '700', lineHeight: 22 }}>›</Text>
-            </TouchableOpacity>
-          </View>
+            {/* Exercise selector */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: COLORS.deep, borderWidth: 1, borderColor: '#ffffff06', borderTopColor: '#ffffff28', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12, marginBottom: 14 }}>
+              <TouchableOpacity onPress={() => exIdx > 0 && navigateExercise(exIdx - 1, -1)} style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: '#2a2a4a', alignItems: 'center', justifyContent: 'center', opacity: exIdx > 0 ? 1 : 0.35 }}>
+                <Text style={{ color: COLORS.text, fontSize: 18, fontWeight: '700', lineHeight: 22 }}>‹</Text>
+              </TouchableOpacity>
+              <Text style={{ color: COLORS.text, fontWeight: 'bold', fontSize: 15, flex: 1, textAlign: 'center', paddingHorizontal: 8 }} numberOfLines={1}>
+                <Text style={{ color: COLORS.text }}>{cleanExerciseName(selectedExercise)}</Text>
+                <Text style={{ color: COLORS.muted, fontWeight: 'normal', fontSize: 13 }}> ({exIdx + 1}/{dayExercises.length})</Text>
+              </Text>
+              <TouchableOpacity onPress={() => exIdx < dayExercises.length - 1 && navigateExercise(exIdx + 1, 1)} style={{ width: 28, height: 28, borderRadius: 6, backgroundColor: '#2a2a4a', alignItems: 'center', justifyContent: 'center', opacity: exIdx < dayExercises.length - 1 ? 1 : 0.35 }}>
+                <Text style={{ color: COLORS.text, fontSize: 18, fontWeight: '700', lineHeight: 22 }}>›</Text>
+              </TouchableOpacity>
+            </View>
 
+        <ScrollView contentContainerStyle={{ paddingBottom: 120, backgroundColor: '#0f0f0f' }} style={{ backgroundColor: '#0f0f0f' }} showsVerticalScrollIndicator={false}>
 
           {/* Header */}
           <View style={styles.progressHeader}>
-            <ExerciseImage exerciseName={selectedExercise} exerciseDbImages={exerciseDbImages} size={160} />
+            <View style={{ borderWidth: 1, borderColor: '#ffffff30', borderRadius: 10, overflow: 'hidden' }}>
+              <ExerciseImage exerciseName={selectedExercise} exerciseDbImages={exerciseDbImages} size={200} />
+            </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.title2}>{cleanExerciseName(selectedExercise)}</Text>
               {parseSetsReps(selectedExercise) && (
@@ -5280,18 +5429,87 @@ function Root() {
                   const lastLogs = logs[logKey(selectedDay.day, selectedExercise)] || [];
                   const lastEntry = lastLogs.length > 0 ? lastLogs[lastLogs.length - 1] : null;
                   const fallbackReps = lastEntry?.reps || (sr ? sr.reps.split('-')[0] : '');
-                  const set1Weight = lastEntry?.sets?.[0]?.weight || lastEntry?.weight || '';
+                  const allCompleted = sessionSets.length > 0 && sessionSets.every(s => s.completed);
+                  const suggestedW = allCompleted
+                    ? calculateSuggestedWeight(cleanExerciseName(selectedExercise), currentWeek, suggestedWeights, profileForm.fitnessLevel)
+                    : null;
                   setSessionSets(Array.from({ length: count }, (_, idx) => ({
-                    weight: lastEntry?.sets?.[idx]?.weight || lastEntry?.weight || '',
+                    weight: lastEntry?.sets?.[idx]?.weight || lastEntry?.weight || suggestedW || '',
                     reps: lastEntry?.sets?.[idx]?.reps || fallbackReps,
                     completed: false,
+                    confirmed: false,
                   })));
-                  if (set1Weight) { savedDismissRef.current = { index: null }; setWeightPickerIndex(0); setWeightPickerVisible(true); }
                 }}
               >
                 <Text style={{ color: COLORS.muted, fontSize: 13, fontWeight: '600' }}>Reset</Text>
               </TouchableOpacity>
             </View>
+            {/* Complete Set button — fixed below header */}
+            {(() => {
+              const activeIndex = sessionSets.findIndex(s => !s.completed);
+              if (activeIndex === -1) return null;
+              const set = sessionSets[activeIndex];
+              return (
+                <TouchableOpacity
+                  activeOpacity={1}
+                  style={{ backgroundColor: '#4ade80', borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginBottom: 16 }}
+                  onPress={() => {
+                    if (set.completed) return;
+                    if (!set.weight || parseFloat(set.weight) <= 0) {
+                      Alert.alert('Enter a Weight', 'Please enter a weight before completing this set.');
+                      return;
+                    }
+                    const s = [...sessionSets];
+                    s[activeIndex] = { ...s[activeIndex], completed: true, confirmed: true };
+                    const completedWeight = s[activeIndex].weight;
+                    for (let i = activeIndex + 1; i < s.length; i++) {
+                      if (!s[i].completed) s[i] = { ...s[i], weight: completedWeight };
+                    }
+                    setSessionSets(s);
+                    const isLastSet = activeIndex === s.length - 1;
+                    if (isLastSet) {
+                      const completed = s.filter(ss => ss.completed);
+                      const maxWeight = Math.max(...completed.map(ss => parseFloat(ss.weight) || 0));
+                      const bestSet = completed.find(ss => parseFloat(ss.weight) === maxWeight) || completed[completed.length - 1];
+                      const key = logKey(selectedDay.day, selectedExercise);
+                      const existing = logs[key] || [];
+                      const allSets = s.map((ss, idx) => ss.completed ? { weight: ss.weight, reps: ss.reps } : (existing[existing.length - 1]?.sets?.[idx] || { weight: '', reps: '' }));
+                      const newEntry = { programWeek: currentWeek, weight: String(maxWeight), reps: bestSet.reps, sets: allSets };
+                      const updatedLogs = { ...logs, [key]: [...existing, newEntry] };
+                      setLogs(updatedLogs);
+                      if (user) updateDoc(doc(db, 'users', user.email), { logs: updatedLogs });
+                      const dayExs = (selectedDay?.exercises || []).filter(e => !e.includes('Full Body Stretching') && !e.includes('Full Body Foam Rolling') && !e.includes('Incline Walk'));
+                      const allLogged = dayExs.every(e => (updatedLogs[logKey(selectedDay.day, e)] || []).some(en => en.programWeek === currentWeek));
+                      if (allLogged) {
+                        Vibration.vibrate([0, 60, 40, 80]);
+                        setShowCompleteButton(true);
+                        setRestTimerRunning(false);
+                        setRestTimerRemaining(0);
+                      } else if (restTimerEnabled) {
+                        const suggested = getRestSuggestion(selectedExercise);
+                        setRestingForExercise(selectedExercise);
+                        setRestTimerDuration(suggested);
+                        setRestTimerRemaining(suggested);
+                        setRestTimerRunning(true);
+                      }
+                    } else {
+                      if (restTimerEnabled) {
+                        const suggested = getRestSuggestion(selectedExercise);
+                        setRestingForExercise(selectedExercise);
+                        setRestTimerDuration(suggested);
+                        setRestTimerRemaining(suggested);
+                        setRestTimerRunning(true);
+                      }
+                      const nextIdx = s.findIndex((ss, i) => i > activeIndex && !ss.completed);
+                      if (nextIdx !== -1) setActiveExerciseIndex(nextIdx);
+                    }
+                  }}
+                >
+                  <Text style={{ color: '#000', fontWeight: '900', fontSize: 16 }}>{activeIndex === sessionSets.length - 1 ? 'Complete & Save Sets' : `Complete Set ${activeIndex + 1}`}</Text>
+                </TouchableOpacity>
+              );
+            })()}
+
             {/* Completed sets summary */}
             {sessionSets.filter(s => s.completed).length > 0 && (
               <View style={{ marginBottom: 16 }}>
@@ -5316,7 +5534,7 @@ function Root() {
                 activeIndex === 1 ? "Good start. Stay locked in." :
                 "Keep the intensity up.";
               return (
-                <View style={{ alignItems: 'center', paddingVertical: 10 }}>
+                <View style={{ paddingVertical: 10 }}>
                   {/* Set progress bar */}
                   <View style={{ width: '100%', marginBottom: 14 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
@@ -5329,18 +5547,20 @@ function Root() {
                       <View style={{ height: 3, backgroundColor: COLORS.accent, borderRadius: 2, width: `${(activeIndex / sessionSets.length) * 100}%` }} />
                     </View>
                   </View>
-                  <View style={{ flexDirection: 'row', gap: 16, marginBottom: 24 }}>
-                    <TouchableOpacity
-                      onPress={() => { setWeightPickerIndex(activeIndex); setWeightPickerVisible(true); }}
-                      style={{ backgroundColor: '#2a2a4a', borderRadius: 16, width: 120, height: 90, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: set.weight ? COLORS.accent : '#ffffff15' }}>
-                      <Text style={{ color: COLORS.muted, fontSize: 11, fontWeight: '600', marginBottom: 4 }}>WEIGHT</Text>
-                      <Text style={{ color: set.weight ? COLORS.text : COLORS.muted, fontSize: 28, fontWeight: '800' }}>{set.weight || '—'}</Text>
-                      {activeIndex > 0 && sessionSets[activeIndex - 1]?.weight ? (
-                        <Text style={{ color: COLORS.accent, fontSize: 10, fontWeight: '600' }}>prev {sessionSets[activeIndex - 1].weight} lbs</Text>
-                      ) : (
-                        <Text style={{ color: COLORS.muted, fontSize: 11 }}>lbs</Text>
-                      )}
-                    </TouchableOpacity>
+                  <View style={{ flexDirection: 'row', gap: 16, marginBottom: 14, justifyContent: 'center' }}>
+                    <Animated.View style={{ transform: [{ scale: set.confirmed ? 1 : weightPulseAnim }] }}>
+                      <TouchableOpacity
+                        onPress={() => { setWeightPickerIndex(activeIndex); setWeightPickerVisible(true); }}
+                        style={{ backgroundColor: '#2a2a4a', borderRadius: 16, width: 120, height: 90, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: set.confirmed ? COLORS.accent : '#6c80ff90' }}>
+                        <Text style={{ color: COLORS.muted, fontSize: 11, fontWeight: '600', marginBottom: 4 }}>WEIGHT</Text>
+                        <Text style={{ color: COLORS.text, fontSize: 28, fontWeight: '800' }}>{set.weight || '—'}</Text>
+                        {activeIndex > 0 && sessionSets[activeIndex - 1]?.weight ? (
+                          <Text style={{ color: COLORS.accent, fontSize: 10, fontWeight: '600' }}>prev {sessionSets[activeIndex - 1].weight} lbs</Text>
+                        ) : (
+                          <Text style={{ color: set.confirmed ? COLORS.muted : '#6c80ffcc', fontSize: 11, fontWeight: '600' }}>{set.confirmed ? 'lbs' : 'confirm ✓'}</Text>
+                        )}
+                      </TouchableOpacity>
+                    </Animated.View>
                     <TouchableOpacity
                       onPress={() => { setRepsPickerIndex(activeIndex); setRepsPickerVisible(true); }}
                       style={{ backgroundColor: '#2a2a4a', borderRadius: 16, width: 120, height: 90, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: set.reps ? COLORS.accent : '#ffffff15' }}>
@@ -5352,43 +5572,6 @@ function Root() {
                 </View>
               );
             })()}
-            <AnimatedPress
-              style={{ backgroundColor: sessionSets.every(s => s.completed) ? COLORS.accent : '#2a2a4a', borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginTop: 6 }}
-              scaleDown={0.96}
-              onPress={() => {
-                const completed = sessionSets.filter(s => s.completed);
-                if (completed.length === 0 || !sessionSets.every(s => s.completed)) return;
-                const maxWeight = Math.max(...completed.map(s => parseFloat(s.weight) || 0));
-                const bestSet = completed.find(s => parseFloat(s.weight) === maxWeight) || completed[completed.length - 1];
-                const key = logKey(selectedDay.day, selectedExercise);
-                const existing = logs[key] || [];
-                const allSets = sessionSets.map((s, idx) => s.completed ? { weight: s.weight, reps: s.reps } : (existing[existing.length - 1]?.sets?.[idx] || { weight: '', reps: '' }));
-                const newEntry = { programWeek: currentWeek, weight: String(maxWeight), reps: bestSet.reps, sets: allSets };
-                const updatedLogs = { ...logs, [key]: [...existing, newEntry] };
-                setLogs(updatedLogs);
-                if (user) updateDoc(doc(db, 'users', user.email), { logs: updatedLogs });
-                const dayExs = (selectedDay?.exercises || []).filter(e =>
-                  !e.includes('Full Body Stretching') && !e.includes('Full Body Foam Rolling') && !e.includes('Incline Walk')
-                );
-                const allLogged = dayExs.every(e =>
-                  (updatedLogs[logKey(selectedDay.day, e)] || []).some(en =>
-                    en.programWeek === currentWeek
-                  )
-                );
-                if (allLogged) {
-                  Vibration.vibrate([0, 60, 40, 80]);
-                  setShowCompleteButton(true);
-                  setRestTimerRunning(false);
-                  setRestTimerRemaining(0);
-                } else {
-                  const sr = parseSetsReps(selectedExercise);
-                  const count = sr ? parseInt(sr.sets) : 3;
-                  setSessionSets(Array.from({ length: count }, (_, idx) => ({ weight: allSets[idx]?.weight || String(maxWeight), reps: allSets[idx]?.reps || bestSet.reps, completed: false })));
-                }
-              }}
-            >
-              <Text style={{ color: sessionSets.every(s => s.completed) ? COLORS.text : COLORS.muted, fontWeight: 'bold', fontSize: 15 }}>Save Sets</Text>
-            </AnimatedPress>
           </View>}
 
           {/* Log History */}
@@ -5512,6 +5695,8 @@ function Root() {
             </>
           ) : null}
         </ScrollView>
+          </Animated.View>
+        </View>
 
         {/* Reps Picker Modal */}
         {(() => {
@@ -5559,6 +5744,12 @@ function Root() {
                       })}
                     </ScrollView>
                   </View>
+                  <TouchableOpacity
+                    onPress={() => setRepsPickerVisible(false)}
+                    style={{ width: 220, backgroundColor: '#2a2a4a', borderRadius: 14, paddingVertical: 16, alignItems: 'center', borderWidth: 1, borderColor: '#ffffff20', marginBottom: 0 }}
+                  >
+                    <Text style={{ color: COLORS.text, fontSize: 15, fontWeight: '700' }}>OK</Text>
+                  </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() => {
                       const s = [...sessionSets];
@@ -5720,20 +5911,33 @@ function Root() {
 
                   {/* ── Weight Picker Card ── */}
                   <View style={{ marginHorizontal: 10, marginBottom: 10, backgroundColor: COLORS.card, borderRadius: 24, overflow: 'hidden', borderWidth: 1, borderColor: '#ffffff10', borderTopColor: '#ffffff28', shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.4, shadowRadius: 20 }}>
-                    <View style={{ paddingHorizontal: 24, paddingVertical: 18, borderBottomWidth: 1, borderBottomColor: '#ffffff10', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Text style={{ color: COLORS.muted, fontSize: 13, fontWeight: '600' }}>Select Weight</Text>
+                    <View style={{ paddingHorizontal: 24, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#ffffff10', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Text style={{ color: COLORS.muted, fontSize: 13, fontWeight: '600', marginLeft: -8 }}>Select Weight</Text>
                       <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
                         <TouchableOpacity onPress={() => {
+                          if (tempWeightVal !== null) {
+                            const s = [...sessionSets];
+                            const newWeight = String(tempWeightVal);
+                            s[weightPickerIndex] = { ...s[weightPickerIndex], weight: newWeight, confirmed: true };
+                            for (let i = weightPickerIndex + 1; i < s.length; i++) {
+                              if (!s[i].completed) s[i] = { ...s[i], weight: newWeight };
+                            }
+                            setSessionSets(s);
+                          }
+                          setTempWeightVal(null);
+                          setWeightPickerVisible(false);
+                        }} style={{ backgroundColor: '#2a2a4a', borderRadius: 10, paddingHorizontal: 16, paddingVertical: 10, borderWidth: 1, borderColor: '#ffffff20' }}>
+                          <Text style={{ color: COLORS.text, fontSize: 13, fontWeight: '700' }}>OK</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => {
                           const s = [...sessionSets];
-                          s[weightPickerIndex] = { ...s[weightPickerIndex], weight: String(tempWeightVal ?? selectedVal) };
-                          s[weightPickerIndex] = { ...s[weightPickerIndex], completed: true };
+                          const newWeight = String(tempWeightVal ?? selectedVal);
+                          s[weightPickerIndex] = { ...s[weightPickerIndex], weight: newWeight, confirmed: true, completed: true };
+                          for (let i = weightPickerIndex + 1; i < s.length; i++) {
+                            if (!s[i].completed) s[i] = { ...s[i], weight: newWeight };
+                          }
                           setSessionSets(s);
                           setTempWeightVal(null);
-                          const nextIdx = s.findIndex((set, i) => i > weightPickerIndex && !set.completed);
-                          if (nextIdx !== -1) {
-                            keepPlatesRef.current = true;
-                            setTimeout(() => { setWeightPickerIndex(nextIdx); setWeightPickerVisible(true); }, 300);
-                          }
                           setWeightPickerVisible(false);
                           if (restTimerEnabled) {
                             const suggested = getRestSuggestion(selectedExercise);
@@ -5766,21 +5970,21 @@ function Root() {
                               setRestTimerRemaining(0);
                             }
                           }
-                        }} style={{ backgroundColor: '#4ade80', borderRadius: 12, paddingHorizontal: 18, paddingVertical: 12 }}>
-                          <Text style={{ color: '#000', fontSize: 13, fontWeight: '700' }}>Complete</Text>
+                        }} style={{ backgroundColor: '#4ade80', borderRadius: 10, paddingHorizontal: 16, paddingVertical: 10 }}>
+                          <Text style={{ color: '#000', fontSize: 13, fontWeight: '700' }}>{weightPickerIndex === sessionSets.length - 1 ? 'Complete & Save' : 'Complete'}</Text>
                         </TouchableOpacity>
                         <TouchableOpacity onPress={() => {
                           if (tempWeightVal !== null) {
                             const s = [...sessionSets];
-                            s[weightPickerIndex] = { ...s[weightPickerIndex], weight: String(tempWeightVal) };
+                            s[weightPickerIndex] = { ...s[weightPickerIndex], weight: String(tempWeightVal), confirmed: true };
                             setSessionSets(s);
                           }
                           setTempWeightVal(null);
                           setWeightPickerVisible(false);
                           setRepsPickerIndex(weightPickerIndex);
                           setRepsPickerVisible(true);
-                        }} style={{ backgroundColor: '#2a2a4a', borderRadius: 12, paddingHorizontal: 18, paddingVertical: 12, borderWidth: 1, borderColor: '#ffffff20' }}>
-                          <Text style={{ color: COLORS.text, fontSize: 13, fontWeight: '700' }}>Adjust Reps</Text>
+                        }} style={{ backgroundColor: '#2a2a4a', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: '#ffffff20' }}>
+                          <Text style={{ color: COLORS.text, fontSize: 12, fontWeight: '700' }}>Adjust Reps</Text>
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -5797,7 +6001,7 @@ function Root() {
                           ref={weightListRef}
                           data={steps}
                           keyExtractor={(w) => String(w)}
-                          style={{ height: 220 }}
+                          style={{ height: 260 }}
                           showsVerticalScrollIndicator={false}
                           getItemLayout={(_, index) => ({ length: 52, offset: 52 * index, index })}
                           initialScrollIndex={Math.max(0, selectedIdx - 2)}
@@ -5821,7 +6025,7 @@ function Root() {
                             const milestone = milestones[w];
                             return (
                               <TouchableOpacity
-                                onPress={() => setTempWeightVal(w)}
+                                onPress={() => { setTempWeightVal(w); weightListRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0.5 }); }}
                                 style={{ height: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 24, backgroundColor: isSelected ? '#ffffff0e' : 'transparent', borderLeftWidth: isSelected ? 3 : 0, borderLeftColor: COLORS.accent }}
                               >
                                 <Text style={{ color: isSelected ? COLORS.text : COLORS.muted, fontSize: isSelected ? 18 : 16, fontWeight: isSelected ? '800' : '400' }}>{label}</Text>
@@ -5924,18 +6128,26 @@ function Root() {
 
           const markDone = () => {
             if (done) { setShowDayComplete(true); return; }
-            const isFirstWorkout = Object.keys(completedWorkouts).length === 0;
             const updated = { ...completedWorkouts, [key]: true };
             setCompletedWorkouts(updated);
             if (user) updateDoc(doc(db, 'users', user.email), { completedWorkouts: updated });
             setShowCompleteButton(false);
-            if (isFirstWorkout && nutritionResult) setShowNutritionNudge(true);
+            const dayIdx = plan ? plan.findIndex(d => d.day === selectedDay?.day) : -1;
+            const dayNutKey = dayIdx !== -1 ? `w${currentWeek}_d${dayIdx + 1}` : null;
+            if (nutritionResult && dayNutKey) {
+              const hasNut = nutritionHistory[dayNutKey] && (nutritionHistory[dayNutKey].calories > 0 || nutritionHistory[dayNutKey].protein > 0);
+              if (!hasNut) setShowNutritionNudge(true);
+            }
             setShowDayComplete(true);
             setRestTimerRunning(false);
             setRestTimerRemaining(0);
             setRestingForExercise(null);
-            const today = new Date().toDateString();
-            setDailyWins(w => ({ ...w, [today]: { ...(w[today] || {}), workout: true } }));
+            const winKey = dayNutKey || new Date().toDateString();
+            setDailyWins(w => {
+              const updated = { ...w, [winKey]: { ...(w[winKey] || {}), workout: true } };
+              if (user) updateDoc(doc(db, 'users', user.email), { dailyWins: updated });
+              return updated;
+            });
             setTimeout(() => {
               setWorkoutChip(true);
               Animated.parallel([
@@ -6051,7 +6263,7 @@ function Root() {
 
         {renderDayCompleteModal()}
 
-      </View>
+      </Animated.View>
     );
   }
 }
@@ -6322,15 +6534,9 @@ const styles = StyleSheet.create({
 export default function App() {
   return (
     <ErrorBoundary>
-      <LinearGradient
-        colors={['#1a0508', '#0a0a0f', '#0a0a0f']}
-        locations={[0, 0.18, 1]}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
-        style={{ flex: 1 }}
-      >
+      <View style={{ flex: 1, backgroundColor: '#0f0f0f' }}>
         <Root />
-      </LinearGradient>
+      </View>
     </ErrorBoundary>
   );
 }
