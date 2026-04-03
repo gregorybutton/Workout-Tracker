@@ -64,6 +64,393 @@ function weightToPlates(totalWeight) {
 }
 function platesToWeight(plates) { return 45 + 2 * plates.reduce((s, p) => s + p, 0); }
 
+const MEAL_TYPES = [
+  { id: 'breakfast', name: 'Breakfast', icon: '🌅' },
+  { id: 'lunch',     name: 'Lunch',     icon: '☀️' },
+  { id: 'dinner',    name: 'Dinner',    icon: '🌙' },
+  { id: 'snacks',    name: 'Snacks',    icon: '🍎' },
+];
+
+const FOOD_DATABASE = [
+  // ── Staples ───────────────────────────────────────────────
+  { name: 'Chicken Breast',      unit: '100g',        calories: 165, protein: 31, carbs: 0,  fats: 4  },
+  { name: 'Chicken Thigh',       unit: '100g',        calories: 209, protein: 26, carbs: 0,  fats: 11 },
+  { name: 'Rice, White',         unit: '100g cooked', calories: 130, protein: 3,  carbs: 28, fats: 0  },
+  { name: 'Rice, Brown',         unit: '100g cooked', calories: 123, protein: 3,  carbs: 26, fats: 1  },
+  { name: 'Oats',                unit: '100g dry',    calories: 389, protein: 17, carbs: 66, fats: 7  },
+  { name: 'Egg',                 unit: 'large egg',   calories: 78,  protein: 6,  carbs: 1,  fats: 5  },
+  { name: 'Egg Whites',          unit: '100g',        calories: 52,  protein: 11, carbs: 1,  fats: 0  },
+  { name: 'Greek Yogurt',        unit: '170g serving',calories: 100, protein: 17, carbs: 6,  fats: 0  },
+  { name: 'Cottage Cheese',      unit: '100g',        calories: 98,  protein: 11, carbs: 3,  fats: 5  },
+  { name: 'Whole Milk',          unit: '240ml',       calories: 149, protein: 8,  carbs: 12, fats: 8  },
+  { name: 'Whey Protein',        unit: 'scoop',       calories: 120, protein: 25, carbs: 3,  fats: 2  },
+  { name: 'Salmon',              unit: '100g',        calories: 208, protein: 20, carbs: 0,  fats: 13 },
+  { name: 'Tuna, Canned',        unit: '142g can',    calories: 132, protein: 29, carbs: 0,  fats: 1  },
+  { name: 'Ground Beef 70/30',   unit: '100g',        calories: 332, protein: 17, carbs: 0,  fats: 29 },
+  { name: 'Ground Beef 80/20',   unit: '100g',        calories: 254, protein: 21, carbs: 0,  fats: 18 },
+  { name: 'Ground Beef 85/15',   unit: '100g',        calories: 215, protein: 23, carbs: 0,  fats: 13 },
+  { name: 'Ground Beef 90/10',   unit: '100g',        calories: 176, protein: 26, carbs: 0,  fats: 8  },
+  { name: 'Ground Beef 93/7',    unit: '100g',        calories: 152, protein: 27, carbs: 0,  fats: 5  },
+  { name: 'Ground Beef 96/4',    unit: '100g',        calories: 130, protein: 28, carbs: 0,  fats: 2  },
+  { name: 'Sweet Potato',        unit: '100g',        calories: 86,  protein: 2,  carbs: 20, fats: 0  },
+  { name: 'Potato, Boiled',      unit: '100g',        calories: 87,  protein: 2,  carbs: 20, fats: 0  },
+  { name: 'Pasta',               unit: '100g dry',    calories: 371, protein: 13, carbs: 74, fats: 2  },
+  { name: 'Bread',               unit: 'slice',       calories: 79,  protein: 3,  carbs: 15, fats: 1  },
+  { name: 'Banana',              unit: 'medium',      calories: 105, protein: 1,  carbs: 27, fats: 0  },
+  { name: 'Apple',               unit: 'medium',      calories: 95,  protein: 0,  carbs: 25, fats: 0  },
+  { name: 'Blueberries',         unit: '100g',        calories: 57,  protein: 1,  carbs: 14, fats: 0  },
+  { name: 'Broccoli',            unit: '100g',        calories: 34,  protein: 3,  carbs: 7,  fats: 0  },
+  { name: 'Spinach',             unit: '100g',        calories: 23,  protein: 3,  carbs: 4,  fats: 0  },
+  { name: 'Almonds',             unit: '30g',         calories: 174, protein: 6,  carbs: 6,  fats: 15 },
+  { name: 'Peanut Butter',       unit: '2 tbsp',      calories: 188, protein: 8,  carbs: 6,  fats: 16 },
+  { name: 'Avocado',             unit: 'half',        calories: 120, protein: 1,  carbs: 6,  fats: 11 },
+  { name: 'Olive Oil',           unit: 'tbsp',        calories: 119, protein: 0,  carbs: 0,  fats: 14 },
+  { name: 'Cheddar Cheese',      unit: '30g',         calories: 120, protein: 7,  carbs: 0,  fats: 10 },
+
+  // ── Proteins ──────────────────────────────────────────────
+  { name: 'Ground Turkey 93%',   unit: '100g',        calories: 148, protein: 21, carbs: 0,  fats: 7  },
+  { name: 'Tilapia',             unit: '100g',        calories: 96,  protein: 20, carbs: 0,  fats: 2  },
+  { name: 'Shrimp',              unit: '100g',        calories: 85,  protein: 18, carbs: 1,  fats: 1  },
+  { name: 'Salmon, Canned',      unit: '100g',        calories: 142, protein: 20, carbs: 0,  fats: 6  },
+  { name: 'Beef Jerky',          unit: '30g',         calories: 82,  protein: 13, carbs: 5,  fats: 1  },
+  { name: 'Turkey Breast, Deli', unit: '100g',        calories: 90,  protein: 19, carbs: 2,  fats: 1  },
+  { name: 'Edamame',             unit: '100g',        calories: 121, protein: 11, carbs: 9,  fats: 5  },
+  { name: 'Tofu, Firm',          unit: '100g',        calories: 76,  protein: 8,  carbs: 2,  fats: 4  },
+  { name: 'Deli Ham',            unit: '100g',        calories: 103, protein: 17, carbs: 2,  fats: 3  },
+
+  // ── Dairy / Eggs ──────────────────────────────────────────
+  { name: 'Butter',              unit: 'tbsp',        calories: 102, protein: 0,  carbs: 0,  fats: 12 },
+  { name: 'Heavy Cream',         unit: 'tbsp',        calories: 52,  protein: 0,  carbs: 0,  fats: 6  },
+  { name: 'Half & Half',         unit: 'tbsp',        calories: 20,  protein: 0,  carbs: 1,  fats: 2  },
+  { name: 'Milk, 2%',            unit: '240ml',       calories: 122, protein: 8,  carbs: 12, fats: 5  },
+  { name: 'Skim Milk',           unit: '240ml',       calories: 83,  protein: 8,  carbs: 12, fats: 0  },
+  { name: 'Cream Cheese',        unit: 'tbsp',        calories: 51,  protein: 1,  carbs: 1,  fats: 5  },
+  { name: 'Sour Cream',          unit: '2 tbsp',      calories: 60,  protein: 1,  carbs: 1,  fats: 6  },
+  { name: 'Ricotta',             unit: '100g',        calories: 174, protein: 11, carbs: 3,  fats: 13 },
+  { name: 'Greek Yogurt, Fat Free', unit: '170g',     calories: 90,  protein: 16, carbs: 7,  fats: 0  },
+  { name: 'Kefir',               unit: '240ml',       calories: 110, protein: 9,  carbs: 12, fats: 2  },
+  { name: 'Mozzarella, Whole',   unit: '30g',         calories: 85,  protein: 6,  carbs: 1,  fats: 6  },
+  { name: 'Mozzarella, Part Skim', unit: '30g',       calories: 72,  protein: 7,  carbs: 1,  fats: 5  },
+  { name: 'Swiss Cheese',        unit: '30g',         calories: 111, protein: 8,  carbs: 0,  fats: 9  },
+  { name: 'Parmesan',            unit: 'tbsp',        calories: 22,  protein: 2,  carbs: 0,  fats: 1  },
+  { name: 'String Cheese',       unit: 'stick',       calories: 80,  protein: 7,  carbs: 1,  fats: 5  },
+  { name: 'Casein Protein',      unit: 'scoop',       calories: 120, protein: 24, carbs: 4,  fats: 1  },
+
+  // ── Carbs / Grains ────────────────────────────────────────
+  { name: 'Cream of Rice',       unit: '100g dry',    calories: 363, protein: 7,  carbs: 80, fats: 1  },
+  { name: 'Bagel, White',        unit: 'medium bagel',calories: 270, protein: 10, carbs: 53, fats: 2  },
+  { name: 'Corn Tortilla',       unit: 'tortilla',    calories: 52,  protein: 1,  carbs: 11, fats: 1  },
+  { name: 'Jasmine Rice',        unit: '100g cooked', calories: 130, protein: 3,  carbs: 28, fats: 0  },
+  { name: 'Quinoa',              unit: '100g cooked', calories: 120, protein: 4,  carbs: 21, fats: 2  },
+  { name: 'Rice Cakes',          unit: '2 cakes',     calories: 70,  protein: 1,  carbs: 15, fats: 0  },
+  { name: 'Baby Potatoes',       unit: '100g',        calories: 77,  protein: 2,  carbs: 17, fats: 0  },
+  { name: 'Sourdough Bread',     unit: 'slice',       calories: 93,  protein: 4,  carbs: 18, fats: 1  },
+  { name: 'Mass Gainer',         unit: '100g scoop',  calories: 380, protein: 20, carbs: 70, fats: 4  },
+
+  // ── Fats / Snacks ─────────────────────────────────────────
+  { name: 'Cashews',             unit: '30g',         calories: 163, protein: 4,  carbs: 9,  fats: 13 },
+  { name: 'Walnuts',             unit: '30g',         calories: 196, protein: 5,  carbs: 4,  fats: 20 },
+  { name: 'Mixed Nuts',          unit: '30g',         calories: 173, protein: 5,  carbs: 6,  fats: 16 },
+  { name: 'Peanuts',             unit: '30g',         calories: 170, protein: 7,  carbs: 5,  fats: 15 },
+  { name: 'Sunflower Seeds',     unit: '30g',         calories: 175, protein: 6,  carbs: 6,  fats: 15 },
+  { name: 'Dark Chocolate 70%',  unit: '30g',         calories: 170, protein: 2,  carbs: 13, fats: 12 },
+  { name: 'Hummus',              unit: '2 tbsp',      calories: 70,  protein: 2,  carbs: 6,  fats: 5  },
+
+  // ── Supplements ───────────────────────────────────────────
+  { name: 'BCAAs',               unit: '10g',         calories: 5,   protein: 1,  carbs: 0,  fats: 0  },
+  { name: 'Creatine',            unit: '5g',          calories: 0,   protein: 0,  carbs: 0,  fats: 0  },
+
+  // ── Fruits ────────────────────────────────────────────────
+  { name: 'Strawberries',        unit: '100g',        calories: 32,  protein: 1,  carbs: 8,  fats: 0  },
+  { name: 'Mango',               unit: '100g',        calories: 60,  protein: 1,  carbs: 15, fats: 0  },
+  { name: 'Pineapple',           unit: '100g',        calories: 50,  protein: 1,  carbs: 13, fats: 0  },
+  { name: 'Grapes',              unit: '100g',        calories: 69,  protein: 1,  carbs: 18, fats: 0  },
+  { name: 'Orange',              unit: 'medium',      calories: 62,  protein: 1,  carbs: 15, fats: 0  },
+  { name: 'Watermelon',          unit: '100g',        calories: 30,  protein: 1,  carbs: 8,  fats: 0  },
+  { name: 'Peach',               unit: 'medium',      calories: 59,  protein: 1,  carbs: 14, fats: 0  },
+  { name: 'Raspberries',         unit: '100g',        calories: 52,  protein: 1,  carbs: 12, fats: 1  },
+  { name: 'Kiwi',                unit: 'medium',      calories: 42,  protein: 1,  carbs: 10, fats: 0  },
+  { name: 'Cherries',            unit: '100g',        calories: 63,  protein: 1,  carbs: 16, fats: 0  },
+  { name: 'Pear',                unit: 'medium',      calories: 101, protein: 1,  carbs: 27, fats: 0  },
+  { name: 'Grapefruit',          unit: 'half',        calories: 52,  protein: 1,  carbs: 13, fats: 0  },
+
+  // ── Vegetables ────────────────────────────────────────────
+  { name: 'Sweet Corn',          unit: '100g',        calories: 86,  protein: 3,  carbs: 19, fats: 1  },
+  { name: 'Green Beans',         unit: '100g',        calories: 31,  protein: 2,  carbs: 7,  fats: 0  },
+  { name: 'Asparagus',           unit: '100g',        calories: 20,  protein: 2,  carbs: 4,  fats: 0  },
+  { name: 'Zucchini',            unit: '100g',        calories: 17,  protein: 1,  carbs: 3,  fats: 0  },
+  { name: 'Bell Pepper',         unit: 'medium',      calories: 31,  protein: 1,  carbs: 7,  fats: 0  },
+  { name: 'Cucumber',            unit: '100g',        calories: 15,  protein: 1,  carbs: 4,  fats: 0  },
+  { name: 'Carrot',              unit: 'medium',      calories: 25,  protein: 1,  carbs: 6,  fats: 0  },
+  { name: 'Kale',                unit: '100g',        calories: 49,  protein: 4,  carbs: 9,  fats: 1  },
+  { name: 'Mushrooms',           unit: '100g',        calories: 22,  protein: 3,  carbs: 3,  fats: 0  },
+  { name: 'Cauliflower',         unit: '100g',        calories: 25,  protein: 2,  carbs: 5,  fats: 0  },
+  { name: 'Peas',                unit: '100g',        calories: 81,  protein: 5,  carbs: 14, fats: 0  },
+  { name: 'Celery',              unit: '100g',        calories: 16,  protein: 1,  carbs: 3,  fats: 0  },
+  { name: 'Tomato',              unit: 'medium',      calories: 22,  protein: 1,  carbs: 5,  fats: 0  },
+  { name: 'Brussels Sprouts',    unit: '100g',        calories: 43,  protein: 3,  carbs: 9,  fats: 0  },
+
+  // ── Beef Cuts ─────────────────────────────────────────────
+  { name: 'Sirloin Steak',       unit: '100g',        calories: 207, protein: 26, carbs: 0,  fats: 11 },
+  { name: 'Ribeye Steak',        unit: '100g',        calories: 291, protein: 24, carbs: 0,  fats: 21 },
+  { name: 'Flank Steak',         unit: '100g',        calories: 192, protein: 27, carbs: 0,  fats: 9  },
+  { name: 'Beef Tenderloin',     unit: '100g',        calories: 215, protein: 26, carbs: 0,  fats: 12 },
+  { name: 'T-Bone Steak',        unit: '100g',        calories: 247, protein: 24, carbs: 0,  fats: 16 },
+  { name: 'NY Strip Steak',      unit: '100g',        calories: 271, protein: 27, carbs: 0,  fats: 17 },
+  { name: 'Beef Brisket',        unit: '100g',        calories: 263, protein: 22, carbs: 0,  fats: 19 },
+  { name: 'Bison, Ground',       unit: '100g',        calories: 175, protein: 24, carbs: 0,  fats: 8  },
+  { name: 'Venison',             unit: '100g',        calories: 158, protein: 30, carbs: 0,  fats: 3  },
+  { name: 'Lamb, Ground',        unit: '100g',        calories: 258, protein: 17, carbs: 0,  fats: 21 },
+  { name: 'Lamb Chops',          unit: '100g',        calories: 294, protein: 25, carbs: 0,  fats: 21 },
+
+  // ── Pork ──────────────────────────────────────────────────
+  { name: 'Pork Tenderloin',     unit: '100g',        calories: 143, protein: 26, carbs: 0,  fats: 4  },
+  { name: 'Pork Chop',           unit: '100g',        calories: 231, protein: 25, carbs: 0,  fats: 14 },
+  { name: 'Bacon',               unit: '3 strips',    calories: 137, protein: 9,  carbs: 0,  fats: 11 },
+  { name: 'Canadian Bacon',      unit: '2 slices',    calories: 68,  protein: 11, carbs: 1,  fats: 2  },
+  { name: 'Pork Belly',          unit: '100g',        calories: 518, protein: 9,  carbs: 0,  fats: 53 },
+  { name: 'Pork Sausage',        unit: '100g',        calories: 378, protein: 14, carbs: 1,  fats: 35 },
+  { name: 'Breakfast Sausage',   unit: '2 links',     calories: 186, protein: 7,  carbs: 1,  fats: 17 },
+  { name: 'Ham, Cooked',         unit: '100g',        calories: 163, protein: 22, carbs: 1,  fats: 8  },
+  { name: 'Prosciutto',          unit: '30g',         calories: 87,  protein: 8,  carbs: 0,  fats: 6  },
+  { name: 'Hot Dog',             unit: '1 frank',     calories: 130, protein: 5,  carbs: 2,  fats: 11 },
+
+  // ── Poultry ───────────────────────────────────────────────
+  { name: 'Chicken Wings',       unit: '100g',        calories: 266, protein: 21, carbs: 0,  fats: 19 },
+  { name: 'Chicken Drumstick',   unit: '100g',        calories: 216, protein: 24, carbs: 0,  fats: 13 },
+  { name: 'Rotisserie Chicken',  unit: '100g',        calories: 190, protein: 24, carbs: 0,  fats: 10 },
+  { name: 'Ground Turkey 85%',   unit: '100g',        calories: 196, protein: 22, carbs: 0,  fats: 12 },
+  { name: 'Duck Breast',         unit: '100g',        calories: 201, protein: 28, carbs: 0,  fats: 10 },
+
+  // ── Seafood ───────────────────────────────────────────────
+  { name: 'Cod',                 unit: '100g',        calories: 82,  protein: 18, carbs: 0,  fats: 1  },
+  { name: 'Halibut',             unit: '100g',        calories: 111, protein: 23, carbs: 0,  fats: 2  },
+  { name: 'Sardines, Canned',    unit: '100g',        calories: 208, protein: 25, carbs: 0,  fats: 11 },
+  { name: 'Mackerel',            unit: '100g',        calories: 205, protein: 19, carbs: 0,  fats: 14 },
+  { name: 'Trout',               unit: '100g',        calories: 168, protein: 23, carbs: 0,  fats: 8  },
+  { name: 'Mahi-Mahi',           unit: '100g',        calories: 109, protein: 24, carbs: 0,  fats: 1  },
+  { name: 'Swordfish',           unit: '100g',        calories: 144, protein: 20, carbs: 0,  fats: 7  },
+  { name: 'Sea Bass',            unit: '100g',        calories: 97,  protein: 18, carbs: 0,  fats: 2  },
+  { name: 'Snapper',             unit: '100g',        calories: 128, protein: 26, carbs: 0,  fats: 2  },
+  { name: 'Crab, King',          unit: '100g',        calories: 97,  protein: 19, carbs: 0,  fats: 2  },
+  { name: 'Lobster',             unit: '100g',        calories: 89,  protein: 19, carbs: 0,  fats: 1  },
+  { name: 'Scallops',            unit: '100g',        calories: 111, protein: 21, carbs: 5,  fats: 1  },
+  { name: 'Clams',               unit: '100g',        calories: 148, protein: 26, carbs: 5,  fats: 2  },
+  { name: 'Oysters',             unit: '100g',        calories: 68,  protein: 7,  carbs: 4,  fats: 2  },
+  { name: 'Mussels',             unit: '100g',        calories: 172, protein: 24, carbs: 7,  fats: 5  },
+
+  // ── Deli / Processed Meats ────────────────────────────────
+  { name: 'Salami',              unit: '30g',         calories: 119, protein: 5,  carbs: 1,  fats: 11 },
+  { name: 'Pepperoni',           unit: '30g',         calories: 138, protein: 6,  carbs: 1,  fats: 12 },
+  { name: 'Roast Beef, Deli',    unit: '100g',        calories: 131, protein: 22, carbs: 1,  fats: 4  },
+  { name: 'Bologna',             unit: '30g',         calories: 88,  protein: 3,  carbs: 1,  fats: 8  },
+  { name: 'Chorizo',             unit: '100g',        calories: 455, protein: 24, carbs: 2,  fats: 39 },
+
+  // ── Plant Proteins ────────────────────────────────────────
+  { name: 'Tempeh',              unit: '100g',        calories: 193, protein: 19, carbs: 9,  fats: 11 },
+  { name: 'Seitan',              unit: '100g',        calories: 370, protein: 75, carbs: 14, fats: 2  },
+  { name: 'Pea Protein',         unit: 'scoop',       calories: 120, protein: 27, carbs: 2,  fats: 1  },
+  { name: 'Lentils, Cooked',     unit: '100g',        calories: 116, protein: 9,  carbs: 20, fats: 0  },
+  { name: 'Black Beans',         unit: '100g cooked', calories: 132, protein: 9,  carbs: 24, fats: 0  },
+  { name: 'Chickpeas',           unit: '100g cooked', calories: 164, protein: 9,  carbs: 27, fats: 3  },
+  { name: 'Kidney Beans',        unit: '100g cooked', calories: 127, protein: 9,  carbs: 23, fats: 0  },
+  { name: 'White Beans',         unit: '100g cooked', calories: 139, protein: 10, carbs: 25, fats: 0  },
+  { name: 'Pinto Beans',         unit: '100g cooked', calories: 143, protein: 9,  carbs: 26, fats: 1  },
+  { name: 'Soybeans, Cooked',    unit: '100g',        calories: 173, protein: 17, carbs: 10, fats: 9  },
+  { name: 'Lima Beans',          unit: '100g cooked', calories: 115, protein: 8,  carbs: 21, fats: 0  },
+  { name: 'Refried Beans',       unit: '100g',        calories: 90,  protein: 5,  carbs: 14, fats: 2  },
+  { name: 'Falafel',             unit: '3 pieces',    calories: 333, protein: 13, carbs: 32, fats: 18 },
+
+  // ── More Cheese ───────────────────────────────────────────
+  { name: 'Gouda',               unit: '30g',         calories: 101, protein: 7,  carbs: 1,  fats: 8  },
+  { name: 'Feta',                unit: '30g',         calories: 75,  protein: 4,  carbs: 1,  fats: 6  },
+  { name: 'Blue Cheese',         unit: '30g',         calories: 100, protein: 6,  carbs: 1,  fats: 8  },
+  { name: 'Provolone',           unit: '30g',         calories: 100, protein: 7,  carbs: 1,  fats: 8  },
+  { name: 'Brie',                unit: '30g',         calories: 101, protein: 6,  carbs: 0,  fats: 8  },
+  { name: 'American Cheese',     unit: '1 slice',     calories: 71,  protein: 4,  carbs: 1,  fats: 5  },
+  { name: 'Monterey Jack',       unit: '30g',         calories: 106, protein: 7,  carbs: 0,  fats: 9  },
+  { name: 'Pepper Jack',         unit: '30g',         calories: 106, protein: 7,  carbs: 0,  fats: 9  },
+  { name: 'Colby Jack',          unit: '30g',         calories: 110, protein: 7,  carbs: 0,  fats: 9  },
+  { name: 'Havarti',             unit: '30g',         calories: 120, protein: 7,  carbs: 0,  fats: 10 },
+
+  // ── More Grains ───────────────────────────────────────────
+  { name: 'Farro, Cooked',       unit: '100g',        calories: 170, protein: 6,  carbs: 34, fats: 1  },
+  { name: 'Barley, Cooked',      unit: '100g',        calories: 123, protein: 2,  carbs: 28, fats: 0  },
+  { name: 'Bulgur, Cooked',      unit: '100g',        calories: 83,  protein: 3,  carbs: 19, fats: 0  },
+  { name: 'Millet, Cooked',      unit: '100g',        calories: 119, protein: 4,  carbs: 24, fats: 1  },
+  { name: 'Buckwheat, Cooked',   unit: '100g',        calories: 92,  protein: 3,  carbs: 20, fats: 1  },
+  { name: 'Couscous, Cooked',    unit: '100g',        calories: 112, protein: 4,  carbs: 23, fats: 0  },
+  { name: 'Amaranth, Cooked',    unit: '100g',        calories: 102, protein: 4,  carbs: 19, fats: 2  },
+  { name: 'Oatmeal, Cooked',     unit: '100g',        calories: 71,  protein: 2,  carbs: 12, fats: 1  },
+  { name: 'Granola',             unit: '100g',        calories: 471, protein: 10, carbs: 64, fats: 20 },
+  { name: 'Cornmeal',            unit: '100g dry',    calories: 362, protein: 8,  carbs: 77, fats: 4  },
+  { name: 'Polenta, Cooked',     unit: '100g',        calories: 71,  protein: 2,  carbs: 14, fats: 1  },
+  { name: 'English Muffin',      unit: '1 muffin',    calories: 132, protein: 5,  carbs: 26, fats: 1  },
+  { name: 'Pita Bread',          unit: '1 pita',      calories: 165, protein: 5,  carbs: 33, fats: 1  },
+  { name: 'Naan',                unit: '1 piece',     calories: 262, protein: 9,  carbs: 45, fats: 5  },
+  { name: 'Whole Wheat Bread',   unit: 'slice',       calories: 69,  protein: 4,  carbs: 12, fats: 1  },
+  { name: 'Rye Bread',           unit: 'slice',       calories: 65,  protein: 2,  carbs: 12, fats: 1  },
+  { name: 'Flour Tortilla',      unit: '8" tortilla', calories: 146, protein: 4,  carbs: 26, fats: 3  },
+  { name: 'Soba Noodles',        unit: '100g cooked', calories: 99,  protein: 5,  carbs: 21, fats: 0  },
+  { name: 'Rice Noodles',        unit: '100g cooked', calories: 108, protein: 2,  carbs: 25, fats: 0  },
+  { name: 'Udon Noodles',        unit: '100g cooked', calories: 132, protein: 4,  carbs: 28, fats: 0  },
+
+  // ── More Fruits ───────────────────────────────────────────
+  { name: 'Dates',               unit: '3 dates',     calories: 83,  protein: 1,  carbs: 22, fats: 0  },
+  { name: 'Figs, Dried',         unit: '30g',         calories: 74,  protein: 1,  carbs: 19, fats: 0  },
+  { name: 'Prunes',              unit: '3 prunes',    calories: 71,  protein: 1,  carbs: 19, fats: 0  },
+  { name: 'Pomegranate',         unit: '100g',        calories: 83,  protein: 2,  carbs: 19, fats: 1  },
+  { name: 'Papaya',              unit: '100g',        calories: 43,  protein: 0,  carbs: 11, fats: 0  },
+  { name: 'Guava',               unit: '100g',        calories: 68,  protein: 3,  carbs: 14, fats: 1  },
+  { name: 'Lychee',              unit: '100g',        calories: 66,  protein: 1,  carbs: 17, fats: 0  },
+  { name: 'Dragon Fruit',        unit: '100g',        calories: 60,  protein: 1,  carbs: 13, fats: 0  },
+  { name: 'Blackberries',        unit: '100g',        calories: 43,  protein: 1,  carbs: 10, fats: 0  },
+  { name: 'Cranberries',         unit: '100g',        calories: 46,  protein: 0,  carbs: 12, fats: 0  },
+  { name: 'Coconut, Shredded',   unit: '30g',         calories: 100, protein: 1,  carbs: 5,  fats: 9  },
+  { name: 'Plantain, Cooked',    unit: '100g',        calories: 116, protein: 1,  carbs: 30, fats: 0  },
+  { name: 'Cantaloupe',          unit: '100g',        calories: 34,  protein: 1,  carbs: 8,  fats: 0  },
+  { name: 'Honeydew',            unit: '100g',        calories: 36,  protein: 1,  carbs: 9,  fats: 0  },
+  { name: 'Apricot',             unit: 'medium',      calories: 17,  protein: 0,  carbs: 4,  fats: 0  },
+  { name: 'Plum',                unit: 'medium',      calories: 30,  protein: 0,  carbs: 8,  fats: 0  },
+  { name: 'Nectarine',           unit: 'medium',      calories: 62,  protein: 1,  carbs: 15, fats: 0  },
+  { name: 'Tangerine',           unit: 'medium',      calories: 47,  protein: 1,  carbs: 12, fats: 0  },
+  { name: 'Coconut Milk',        unit: '100ml',       calories: 197, protein: 2,  carbs: 6,  fats: 21 },
+  { name: 'Passion Fruit',       unit: '100g',        calories: 97,  protein: 2,  carbs: 23, fats: 1  },
+
+  // ── More Vegetables ───────────────────────────────────────
+  { name: 'Artichoke',           unit: 'medium',      calories: 60,  protein: 4,  carbs: 13, fats: 0  },
+  { name: 'Beets',               unit: '100g',        calories: 43,  protein: 2,  carbs: 10, fats: 0  },
+  { name: 'Bok Choy',            unit: '100g',        calories: 13,  protein: 1,  carbs: 2,  fats: 0  },
+  { name: 'Cabbage, Green',      unit: '100g',        calories: 25,  protein: 1,  carbs: 6,  fats: 0  },
+  { name: 'Cabbage, Red',        unit: '100g',        calories: 31,  protein: 1,  carbs: 7,  fats: 0  },
+  { name: 'Collard Greens',      unit: '100g',        calories: 32,  protein: 3,  carbs: 6,  fats: 0  },
+  { name: 'Eggplant',            unit: '100g',        calories: 25,  protein: 1,  carbs: 6,  fats: 0  },
+  { name: 'Leek',                unit: '100g',        calories: 61,  protein: 2,  carbs: 14, fats: 0  },
+  { name: 'Okra',                unit: '100g',        calories: 33,  protein: 2,  carbs: 7,  fats: 0  },
+  { name: 'Parsnip',             unit: '100g',        calories: 75,  protein: 1,  carbs: 18, fats: 0  },
+  { name: 'Swiss Chard',         unit: '100g',        calories: 19,  protein: 2,  carbs: 4,  fats: 0  },
+  { name: 'Turnip',              unit: '100g',        calories: 28,  protein: 1,  carbs: 6,  fats: 0  },
+  { name: 'Radish',              unit: '100g',        calories: 16,  protein: 1,  carbs: 3,  fats: 0  },
+  { name: 'Butternut Squash',    unit: '100g',        calories: 45,  protein: 1,  carbs: 12, fats: 0  },
+  { name: 'Acorn Squash',        unit: '100g',        calories: 40,  protein: 1,  carbs: 10, fats: 0  },
+  { name: 'Spaghetti Squash',    unit: '100g',        calories: 31,  protein: 1,  carbs: 7,  fats: 0  },
+  { name: 'Fennel',              unit: '100g',        calories: 31,  protein: 1,  carbs: 7,  fats: 0  },
+  { name: 'Snap Peas',           unit: '100g',        calories: 42,  protein: 3,  carbs: 8,  fats: 0  },
+  { name: 'Watercress',          unit: '100g',        calories: 11,  protein: 2,  carbs: 1,  fats: 0  },
+  { name: 'Arugula',             unit: '100g',        calories: 25,  protein: 3,  carbs: 4,  fats: 1  },
+  { name: 'Romaine Lettuce',     unit: '100g',        calories: 17,  protein: 1,  carbs: 3,  fats: 0  },
+  { name: 'Iceberg Lettuce',     unit: '100g',        calories: 14,  protein: 1,  carbs: 3,  fats: 0  },
+  { name: 'Onion, Yellow',       unit: '100g',        calories: 40,  protein: 1,  carbs: 9,  fats: 0  },
+  { name: 'Red Onion',           unit: '100g',        calories: 40,  protein: 1,  carbs: 9,  fats: 0  },
+  { name: 'Green Onion',         unit: '100g',        calories: 32,  protein: 2,  carbs: 7,  fats: 0  },
+  { name: 'Garlic',              unit: '1 clove',     calories: 4,   protein: 0,  carbs: 1,  fats: 0  },
+  { name: 'Ginger',              unit: '100g',        calories: 80,  protein: 2,  carbs: 18, fats: 1  },
+  { name: 'Jalapeño',            unit: '1 pepper',    calories: 4,   protein: 0,  carbs: 1,  fats: 0  },
+  { name: 'Corn, Canned',        unit: '100g',        calories: 86,  protein: 3,  carbs: 19, fats: 1  },
+
+  // ── More Nuts & Seeds ─────────────────────────────────────
+  { name: 'Pistachios',          unit: '30g',         calories: 159, protein: 6,  carbs: 8,  fats: 13 },
+  { name: 'Brazil Nuts',         unit: '30g',         calories: 196, protein: 4,  carbs: 4,  fats: 20 },
+  { name: 'Hazelnuts',           unit: '30g',         calories: 188, protein: 4,  carbs: 5,  fats: 18 },
+  { name: 'Macadamia Nuts',      unit: '30g',         calories: 204, protein: 2,  carbs: 4,  fats: 22 },
+  { name: 'Pine Nuts',           unit: '30g',         calories: 204, protein: 4,  carbs: 4,  fats: 21 },
+  { name: 'Pecans',              unit: '30g',         calories: 210, protein: 3,  carbs: 4,  fats: 22 },
+  { name: 'Chia Seeds',          unit: '2 tbsp',      calories: 97,  protein: 3,  carbs: 8,  fats: 6  },
+  { name: 'Flaxseeds, Ground',   unit: '2 tbsp',      calories: 75,  protein: 3,  carbs: 4,  fats: 6  },
+  { name: 'Hemp Seeds',          unit: '3 tbsp',      calories: 166, protein: 10, carbs: 3,  fats: 13 },
+  { name: 'Pumpkin Seeds',       unit: '30g',         calories: 163, protein: 9,  carbs: 4,  fats: 14 },
+  { name: 'Sesame Seeds',        unit: 'tbsp',        calories: 52,  protein: 2,  carbs: 2,  fats: 4  },
+  { name: 'Almond Butter',       unit: '2 tbsp',      calories: 196, protein: 7,  carbs: 6,  fats: 18 },
+  { name: 'Tahini',              unit: 'tbsp',        calories: 89,  protein: 3,  carbs: 3,  fats: 8  },
+
+  // ── Oils & Cooking Fats ───────────────────────────────────
+  { name: 'Coconut Oil',         unit: 'tbsp',        calories: 121, protein: 0,  carbs: 0,  fats: 14 },
+  { name: 'Avocado Oil',         unit: 'tbsp',        calories: 124, protein: 0,  carbs: 0,  fats: 14 },
+  { name: 'Ghee',                unit: 'tbsp',        calories: 130, protein: 0,  carbs: 0,  fats: 15 },
+  { name: 'Sesame Oil',          unit: 'tbsp',        calories: 120, protein: 0,  carbs: 0,  fats: 14 },
+  { name: 'Canola Oil',          unit: 'tbsp',        calories: 124, protein: 0,  carbs: 0,  fats: 14 },
+
+  // ── Condiments & Sauces ───────────────────────────────────
+  { name: 'Ketchup',             unit: 'tbsp',        calories: 19,  protein: 0,  carbs: 5,  fats: 0  },
+  { name: 'Mustard, Yellow',     unit: 'tbsp',        calories: 9,   protein: 1,  carbs: 1,  fats: 1  },
+  { name: 'Mayonnaise',          unit: 'tbsp',        calories: 94,  protein: 0,  carbs: 0,  fats: 10 },
+  { name: 'Ranch Dressing',      unit: '2 tbsp',      calories: 145, protein: 1,  carbs: 2,  fats: 15 },
+  { name: 'BBQ Sauce',           unit: '2 tbsp',      calories: 60,  protein: 1,  carbs: 13, fats: 0  },
+  { name: 'Hot Sauce',           unit: 'tsp',         calories: 1,   protein: 0,  carbs: 0,  fats: 0  },
+  { name: 'Soy Sauce',           unit: 'tbsp',        calories: 10,  protein: 2,  carbs: 1,  fats: 0  },
+  { name: 'Teriyaki Sauce',      unit: '2 tbsp',      calories: 62,  protein: 1,  carbs: 14, fats: 0  },
+  { name: 'Salsa',               unit: '2 tbsp',      calories: 10,  protein: 0,  carbs: 2,  fats: 0  },
+  { name: 'Honey',               unit: 'tbsp',        calories: 64,  protein: 0,  carbs: 17, fats: 0  },
+  { name: 'Maple Syrup',         unit: 'tbsp',        calories: 52,  protein: 0,  carbs: 13, fats: 0  },
+  { name: 'Sriracha',            unit: 'tbsp',        calories: 15,  protein: 0,  carbs: 3,  fats: 0  },
+  { name: 'Worcestershire',      unit: 'tbsp',        calories: 13,  protein: 0,  carbs: 3,  fats: 0  },
+  { name: 'Apple Cider Vinegar', unit: 'tbsp',        calories: 3,   protein: 0,  carbs: 0,  fats: 0  },
+  { name: 'Tzatziki',            unit: '2 tbsp',      calories: 20,  protein: 1,  carbs: 1,  fats: 2  },
+  { name: 'Guacamole',           unit: '2 tbsp',      calories: 50,  protein: 1,  carbs: 3,  fats: 4  },
+  { name: 'Miso Paste',          unit: 'tbsp',        calories: 34,  protein: 2,  carbs: 5,  fats: 1  },
+  { name: 'Pesto',               unit: '2 tbsp',      calories: 160, protein: 4,  carbs: 2,  fats: 15 },
+  { name: 'Marinara Sauce',      unit: '100g',        calories: 53,  protein: 2,  carbs: 9,  fats: 1  },
+  { name: 'Olive Tapenade',      unit: '2 tbsp',      calories: 44,  protein: 0,  carbs: 2,  fats: 4  },
+
+  // ── Beverages ─────────────────────────────────────────────
+  { name: 'Coffee, Black',       unit: '240ml',       calories: 2,   protein: 0,  carbs: 0,  fats: 0  },
+  { name: 'Green Tea',           unit: '240ml',       calories: 2,   protein: 0,  carbs: 0,  fats: 0  },
+  { name: 'Orange Juice',        unit: '240ml',       calories: 112, protein: 2,  carbs: 26, fats: 0  },
+  { name: 'Apple Juice',         unit: '240ml',       calories: 114, protein: 0,  carbs: 28, fats: 0  },
+  { name: 'Sports Drink',        unit: '360ml',       calories: 80,  protein: 0,  carbs: 22, fats: 0  },
+  { name: 'Almond Milk, Unswt.', unit: '240ml',       calories: 30,  protein: 1,  carbs: 1,  fats: 3  },
+  { name: 'Oat Milk',            unit: '240ml',       calories: 120, protein: 3,  carbs: 16, fats: 5  },
+  { name: 'Soy Milk',            unit: '240ml',       calories: 80,  protein: 7,  carbs: 4,  fats: 4  },
+  { name: 'Coconut Water',       unit: '240ml',       calories: 45,  protein: 0,  carbs: 9,  fats: 0  },
+  { name: 'Kombucha',            unit: '240ml',       calories: 30,  protein: 0,  carbs: 7,  fats: 0  },
+
+  // ── Breakfast Items ───────────────────────────────────────
+  { name: 'Pancake, Plain',      unit: '1 medium',    calories: 175, protein: 4,  carbs: 28, fats: 6  },
+  { name: 'Waffle, Plain',       unit: '1 waffle',    calories: 218, protein: 6,  carbs: 25, fats: 10 },
+  { name: 'French Toast',        unit: '1 slice',     calories: 149, protein: 7,  carbs: 16, fats: 7  },
+  { name: 'Croissant',           unit: '1 medium',    calories: 231, protein: 5,  carbs: 26, fats: 12 },
+  { name: 'Muffin, Blueberry',   unit: '1 muffin',    calories: 313, protein: 4,  carbs: 48, fats: 12 },
+  { name: 'Yogurt Parfait',      unit: '100g',        calories: 95,  protein: 4,  carbs: 16, fats: 2  },
+  { name: 'Hash Browns',         unit: '100g',        calories: 265, protein: 2,  carbs: 26, fats: 17 },
+
+  // ── Snacks ────────────────────────────────────────────────
+  { name: 'Protein Bar',         unit: '1 bar',       calories: 200, protein: 21, carbs: 22, fats: 9  },
+  { name: 'Granola Bar',         unit: '1 bar',       calories: 193, protein: 4,  carbs: 29, fats: 7  },
+  { name: 'Popcorn, Air Popped', unit: '30g',         calories: 110, protein: 3,  carbs: 22, fats: 1  },
+  { name: 'Pretzels',            unit: '30g',         calories: 114, protein: 3,  carbs: 24, fats: 1  },
+  { name: 'Potato Chips',        unit: '30g',         calories: 153, protein: 2,  carbs: 15, fats: 10 },
+  { name: 'Tortilla Chips',      unit: '30g',         calories: 142, protein: 2,  carbs: 18, fats: 7  },
+  { name: 'Trail Mix',           unit: '30g',         calories: 130, protein: 4,  carbs: 13, fats: 8  },
+  { name: 'Oreo Cookies',        unit: '3 cookies',   calories: 160, protein: 2,  carbs: 25, fats: 7  },
+  { name: 'Rice Cake, Plain',    unit: '1 cake',      calories: 35,  protein: 1,  carbs: 7,  fats: 0  },
+  { name: 'Edamame, Shelled',    unit: '100g',        calories: 122, protein: 11, carbs: 9,  fats: 5  },
+
+  // ── International ─────────────────────────────────────────
+  { name: 'Egg Fried Rice',      unit: '100g',        calories: 163, protein: 5,  carbs: 22, fats: 6  },
+  { name: 'Gyoza (3 pcs)',       unit: '3 pieces',    calories: 150, protein: 6,  carbs: 18, fats: 6  },
+  { name: 'Lentil Soup',         unit: '100g',        calories: 71,  protein: 4,  carbs: 12, fats: 1  },
+  { name: 'Collagen Peptides',   unit: 'scoop',       calories: 40,  protein: 9,  carbs: 0,  fats: 0  },
+];
+
+function getRelatableUnit(unit) {
+  if (!unit) return null;
+  const gMatch = unit.match(/^(\d+\.?\d*)\s*g/);
+  if (gMatch) {
+    const g = parseFloat(gMatch[1]);
+    const cups = g / 240;
+    const rounded = Math.round(cups * 4) / 4;
+    if (rounded === 0) return null;
+    return `≈ ${rounded} cup`;
+  }
+  const mlMatch = unit.match(/^(\d+\.?\d*)\s*ml/);
+  if (mlMatch) {
+    const ml = parseFloat(mlMatch[1]);
+    const cups = ml / 240;
+    if (cups >= 0.75) return `≈ ${Math.round(cups * 4) / 4} cup`;
+    return `≈ ${Math.round(ml * 0.03381 * 10) / 10} fl oz`;
+  }
+  return null;
+}
 
 const WORKOUT_PLANS = {
   'Building Muscle - Men 5x': buildPlan([
@@ -751,26 +1138,553 @@ function ExpandablePreviewCard({ d, cardAnim, getDayIcon }) {
   );
 }
 
-function DayCard({ item, currentWeek, logs, completedWorkouts, isNext, onPress, onSaveNutrition, nutritionData, nutritionGoal, expandedNutKey, setExpandedNutKey, nutKey }) {
+// ── Meal Log Modal ─────────────────────────────────────────────
+function MealLogModal({ visible, onClose, nutKey, mealsData, onSaveMeals, customFoods = [], onSaveCustomFood, favoriteFoods = [], onToggleFavorite, nutritionHistory = {}, onLogout, onSettings }) {
+  // Internal nav: 'overview' | 'detail' | 'addFood'
+  const [view, setView] = useState('overview');
+  const [activeMealId, setActiveMealId] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  // addFood sub-state
+  const [addMode, setAddMode] = useState('search'); // 'search' | 'quick'
+  const [searchQuery, setSearchQuery] = useState('');
+  const [quickMacros, setQuickMacros] = useState({ name: '', unit: '', calories: '', protein: '', carbs: '', fats: '', quantity: '1' });
+  const [selectedFood, setSelectedFood] = useState(null); // food tapped in search
+  const [qty, setQty] = useState('1');
+  const [editingFoodId, setEditingFoodId] = useState(null); // food being qty-edited in detail
+  const [editQty, setEditQty] = useState('1');
+
+  // Local copy of meals — [ { id, name, icon, foods: [{id,name,cal,prot,carbs,fats}], totals } ]
+  const [meals, setMeals] = useState([]);
+
+  // Initialise / reset when opened
+  useEffect(() => {
+    if (!visible) return;
+    const base = MEAL_TYPES.map(mt => {
+      const existing = mealsData?.find(m => m.id === mt.id);
+      return existing
+        ? { ...existing }
+        : { id: mt.id, name: mt.name, icon: mt.icon, foods: [], totals: { calories: 0, protein: 0, carbs: 0, fats: 0 } };
+    });
+    setMeals(base);
+    setView('overview');
+    setActiveMealId(null);
+    setSearchQuery('');
+    setSelectedFood(null);
+    setQty('1');
+    setQuickMacros({ name: '', unit: '', calories: '', protein: '', carbs: '', fats: '', quantity: '1' });
+  }, [visible]);
+
+  // Recalculate meal totals whenever foods change
+  function recalcMeal(mealList) {
+    return mealList.map(m => ({
+      ...m,
+      totals: m.foods.reduce(
+        (acc, f) => ({ calories: acc.calories + f.calories, protein: acc.protein + f.protein, carbs: acc.carbs + f.carbs, fats: acc.fats + f.fats }),
+        { calories: 0, protein: 0, carbs: 0, fats: 0 }
+      ),
+    }));
+  }
+
+  function autoSave(updatedMeals) {
+    const totals = updatedMeals.reduce(
+      (acc, m) => ({ calories: acc.calories + m.totals.calories, protein: acc.protein + m.totals.protein, carbs: acc.carbs + m.totals.carbs, fats: acc.fats + m.totals.fats }),
+      { calories: 0, protein: 0, carbs: 0, fats: 0 }
+    );
+    onSaveMeals(updatedMeals, totals);
+  }
+
+  function addFoodToMeal(food, quantity = 1) {
+    const q = Math.max(parseFloat(quantity) || 1, 0.1);
+    const newFood = {
+      id: `${Date.now()}`,
+      name: food.name,
+      unit: food.unit || '',
+      quantity: q,
+      perUnit: { calories: food.calories, protein: food.protein, carbs: food.carbs, fats: food.fats },
+      calories: Math.round(food.calories * q),
+      protein:  Math.round(food.protein  * q),
+      carbs:    Math.round(food.carbs    * q),
+      fats:     Math.round(food.fats     * q),
+    };
+    const updated = recalcMeal(meals.map(m => m.id === activeMealId ? { ...m, foods: [...m.foods, newFood] } : m));
+    setMeals(updated);
+    autoSave(updated);
+    setView('detail');
+    setSearchQuery('');
+    setSelectedFood(null);
+    setQty('1');
+    setQuickMacros({ name: '', unit: '', calories: '', protein: '', carbs: '', fats: '', quantity: '1' });
+  }
+
+  function addAllFoodsFromMeal(mealFoods) {
+    const newFoods = mealFoods.map(f => ({
+      id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      name: f.name,
+      unit: f.unit || '',
+      quantity: f.quantity || 1,
+      perUnit: f.perUnit || { calories: f.calories, protein: f.protein, carbs: f.carbs, fats: f.fats },
+      calories: f.calories,
+      protein: f.protein,
+      carbs: f.carbs,
+      fats: f.fats,
+    }));
+    const updated = recalcMeal(meals.map(m => m.id === activeMealId ? { ...m, foods: [...m.foods, ...newFoods] } : m));
+    setMeals(updated);
+    autoSave(updated);
+    setView('detail');
+  }
+
+  function removeFoodFromMeal(mealId, foodId) {
+    const updated = recalcMeal(meals.map(m => m.id === mealId ? { ...m, foods: m.foods.filter(f => f.id !== foodId) } : m));
+    setMeals(updated);
+    autoSave(updated);
+  }
+
+
+  function updateFoodQty(mealId, foodId, newQty) {
+    const q = Math.max(parseFloat(newQty) || 1, 0.1);
+    const updated = recalcMeal(meals.map(m => {
+      if (m.id !== mealId) return m;
+      return {
+        ...m,
+        foods: m.foods.map(f => {
+          if (f.id !== foodId) return f;
+          const base = f.perUnit ?? { calories: Math.round(f.calories / (f.quantity || 1)), protein: Math.round(f.protein / (f.quantity || 1)), carbs: Math.round(f.carbs / (f.quantity || 1)), fats: Math.round(f.fats / (f.quantity || 1)) };
+          return { ...f, quantity: q, perUnit: base, calories: Math.round(base.calories * q), protein: Math.round(base.protein * q), carbs: Math.round(base.carbs * q), fats: Math.round(base.fats * q) };
+        }),
+      };
+    }));
+    setMeals(updated);
+    const totals = updated.reduce((acc, m) => ({ calories: acc.calories + m.totals.calories, protein: acc.protein + m.totals.protein, carbs: acc.carbs + m.totals.carbs, fats: acc.fats + m.totals.fats }), { calories: 0, protein: 0, carbs: 0, fats: 0 });
+    onSaveMeals(updated, totals);
+    setEditingFoodId(null);
+  }
+
+  const activeMeal = meals.find(m => m.id === activeMealId);
+  const dailyTotals = meals.reduce(
+    (acc, m) => ({ calories: acc.calories + m.totals.calories, protein: acc.protein + m.totals.protein, carbs: acc.carbs + m.totals.carbs, fats: acc.fats + m.totals.fats }),
+    { calories: 0, protein: 0, carbs: 0, fats: 0 }
+  );
+  const totalFoods = meals.reduce((s, m) => s + m.foods.length, 0);
+  const sq = searchQuery.toLowerCase();
+  const favSet = new Set(favoriteFoods);
+  const allFoods = [
+    ...customFoods.map(f => ({ ...f, isCustom: true })),
+    ...FOOD_DATABASE,
+  ];
+  const matched = allFoods.filter(f => f.name.toLowerCase().includes(sq));
+  const filteredDB = [
+    ...matched.filter(f => favSet.has(f.name)).map(f => ({ ...f, isFavorite: true })),
+    ...matched.filter(f => !favSet.has(f.name) && f.isCustom),
+    ...matched.filter(f => !favSet.has(f.name) && !f.isCustom),
+  ];
+
+  const recentMeals = Object.entries(nutritionHistory)
+    .filter(([key]) => key !== nutKey)
+    .sort((a, b) => b[0].localeCompare(a[0]))
+    .flatMap(([key, dayData]) =>
+      (dayData.meals || [])
+        .filter(m => m.foods && m.foods.length > 0)
+        .map(m => ({ ...m, dateKey: key }))
+    )
+    .slice(0, 25);
+
+  function formatDateKey(key) {
+    const [, mo, day] = key.split('-');
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return `${months[parseInt(mo) - 1]} ${parseInt(day)}`;
+  }
+
+  return (
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+      <View style={{ flex: 1, backgroundColor: '#0f0f0f' }}>
+        {/* Header */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: 20, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: '#ffffff10' }}>
+          <TouchableOpacity
+            onPress={() => { if (view === 'addFood') setView('detail'); else if (view === 'detail') setView('overview'); else onClose(); }}
+            style={{ marginRight: 12, paddingVertical: 4, paddingRight: 12 }}
+          >
+            <Text style={{ color: COLORS.text, fontSize: 44, fontWeight: '700', lineHeight: 48 }}>‹</Text>
+          </TouchableOpacity>
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: COLORS.text, fontSize: 18, fontWeight: '900' }}>
+              {view === 'overview' ? 'Log Meals' : view === 'detail' ? (activeMeal?.icon + ' ' + activeMeal?.name) : 'Add Food'}
+            </Text>
+            {view === 'overview' && (
+              <Text style={{ color: COLORS.muted, fontSize: 12, marginTop: 2 }}>
+                {totalFoods === 0 ? 'No foods logged yet' : `${totalFoods} food${totalFoods !== 1 ? 's' : ''} logged`}
+              </Text>
+            )}
+          </View>
+          {view === 'detail' && (
+            <TouchableOpacity onPress={() => { setAddMode('search'); setView('addFood'); }} style={{ backgroundColor: '#2a2a4a', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1, borderColor: '#ffffff20' }}>
+              <Text style={{ color: COLORS.text, fontWeight: '700', fontSize: 13 }}>+ Add Food</Text>
+            </TouchableOpacity>
+          )}
+          <View style={{ marginLeft: 12 }}>
+            <TouchableOpacity onPress={() => setMenuOpen(v => !v)} style={{ padding: 4 }}>
+              <Text style={{ color: COLORS.muted, fontSize: 20, letterSpacing: 2 }}>···</Text>
+            </TouchableOpacity>
+            {menuOpen && (
+              <View style={{ position: 'absolute', top: 32, right: 0, backgroundColor: '#1c1c3a', borderRadius: 12, borderWidth: 1, borderColor: '#ffffff15', zIndex: 100, minWidth: 140, overflow: 'hidden' }}>
+                <TouchableOpacity onPress={() => { setMenuOpen(false); onSettings?.(); }} style={{ paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#ffffff10' }}>
+                  <Text style={{ color: COLORS.text, fontSize: 14, fontWeight: '600' }}>⚙️  Settings</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => { setMenuOpen(false); onLogout?.(); }} style={{ paddingHorizontal: 16, paddingVertical: 12 }}>
+                  <Text style={{ color: '#f87171', fontSize: 14, fontWeight: '600' }}>🚪  Log Out</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        </View>
+
+        {/* Daily totals bar (always visible) */}
+        <View style={{ backgroundColor: '#1a1a2e', paddingBottom: 10, paddingHorizontal: 16 }}>
+          <Text style={{ color: COLORS.muted, fontSize: 9, fontWeight: '700', letterSpacing: 1, textAlign: 'center', paddingTop: 6, paddingBottom: 4 }}>TODAY'S TOTAL</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
+          {[['🔥', dailyTotals.calories, 'kcal'], ['💪', dailyTotals.protein, 'g prot'], ['🍚', dailyTotals.carbs, 'g carbs'], ['🥑', dailyTotals.fats, 'g fats']].map(([icon, val, label]) => (
+            <View key={label} style={{ alignItems: 'center' }}>
+              <Text style={{ color: COLORS.text, fontSize: 15, fontWeight: '800' }}>{icon} {val}</Text>
+              <Text style={{ color: COLORS.muted, fontSize: 10, marginTop: 1 }}>{label}</Text>
+            </View>
+          ))}
+        </View>
+        </View>
+
+        {/* ── OVERVIEW ── */}
+        {view === 'overview' && (
+          <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 60 }}>
+            {meals.map(meal => (
+              <TouchableOpacity
+                key={meal.id}
+                onPress={() => { setActiveMealId(meal.id); setView('detail'); }}
+                style={{ backgroundColor: '#1c1c3a', borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: '#ffffff0a' }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <Text style={{ fontSize: 22 }}>{meal.icon}</Text>
+                    <View>
+                      <Text style={{ color: COLORS.text, fontWeight: '800', fontSize: 15 }}>{meal.name}</Text>
+                      <Text style={{ color: COLORS.muted, fontSize: 11, marginTop: 2 }}>
+                        {meal.foods.length === 0 ? 'No foods logged yet' : `${meal.foods.length} food${meal.foods.length !== 1 ? 's' : ''}`}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={{ alignItems: 'flex-end' }}>
+                    <Text style={{ color: meal.totals.calories > 0 ? COLORS.success : COLORS.muted, fontWeight: '800', fontSize: 15 }}>{meal.totals.calories} kcal</Text>
+                    {meal.totals.protein > 0 && <Text style={{ color: COLORS.muted, fontSize: 11, marginTop: 2 }}>{meal.totals.protein}g protein</Text>}
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )}
+
+        {/* ── MEAL DETAIL ── */}
+        {view === 'detail' && activeMeal && (
+          <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 60 }}>
+            {/* Meal totals */}
+            <View style={{ backgroundColor: '#1a1a2e', borderRadius: 12, paddingHorizontal: 12, paddingBottom: 12, paddingTop: 8, marginBottom: 16 }}>
+              <Text style={{ color: COLORS.muted, fontSize: 9, fontWeight: '700', letterSpacing: 1, textAlign: 'center', marginBottom: 6 }}>THIS MEAL</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
+              {[['Cals', activeMeal.totals.calories], ['Prot', activeMeal.totals.protein + 'g'], ['Carbs', activeMeal.totals.carbs + 'g'], ['Fats', activeMeal.totals.fats + 'g']].map(([lbl, val]) => (
+                <View key={lbl} style={{ alignItems: 'center' }}>
+                  <Text style={{ color: COLORS.text, fontWeight: '800', fontSize: 15 }}>{val}</Text>
+                  <Text style={{ color: COLORS.muted, fontSize: 10 }}>{lbl}</Text>
+                </View>
+              ))}
+            </View>
+            </View>
+            {activeMeal.foods.length === 0 ? (
+              <View style={{ alignItems: 'center', paddingVertical: 40 }}>
+                <Text style={{ color: COLORS.muted, fontSize: 15 }}>No foods logged yet</Text>
+                <Text style={{ color: COLORS.muted, fontSize: 12, marginTop: 6 }}>Tap "+ Add Food" to get started</Text>
+              </View>
+            ) : (
+              activeMeal.foods.map(food => {
+                const isEditing = editingFoodId === food.id;
+                const qtyNum = food.quantity || 1;
+                const qtyStr = qtyNum % 1 === 0 ? String(qtyNum) : qtyNum.toFixed(1);
+                const qtyDisplay = food.unit
+                  ? `${qtyStr} × ${food.unit}`
+                  : qtyNum !== 1 ? `×${qtyStr}` : null;
+                return (
+                  <View key={food.id} style={{ backgroundColor: isEditing ? '#1e3a2a' : '#1c1c3a', borderRadius: 12, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: isEditing ? '#4ade8040' : 'transparent' }}>
+                    {/* Top row: name + qty badge + delete */}
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <Text style={{ color: isEditing ? COLORS.success : COLORS.text, fontWeight: '700', fontSize: 14 }}>{food.name}</Text>
+                        {qtyDisplay && (
+                          <View style={{ backgroundColor: '#2a2a4a', borderRadius: 5, paddingHorizontal: 6, paddingVertical: 2 }}>
+                            <Text style={{ color: COLORS.muted, fontSize: 11, fontWeight: '700' }}>{qtyDisplay}</Text>
+                          </View>
+                        )}
+                      </View>
+                      <TouchableOpacity
+                        onPress={() => { setEditingFoodId(isEditing ? null : food.id); setEditQty(String(food.quantity || 1)); }}
+                        style={{ marginLeft: 8, padding: 4 }}
+                      >
+                        <Text style={{ color: isEditing ? COLORS.success : COLORS.muted, fontSize: 12, fontWeight: '700' }}>{isEditing ? 'Done' : 'Edit'}</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => { if (isEditing) setEditingFoodId(null); removeFoodFromMeal(activeMeal.id, food.id); }} style={{ marginLeft: 8, padding: 4 }}>
+                        <Text style={{ color: COLORS.accent, fontSize: 18, fontWeight: '700' }}>×</Text>
+                      </TouchableOpacity>
+                    </View>
+                    <Text style={{ color: COLORS.muted, fontSize: 11, marginTop: 3 }}>{food.calories} kcal · {food.protein}g P · {food.carbs}g C · {food.fats}g F</Text>
+                    {/* Inline qty editor */}
+                    {isEditing && (
+                      <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10, gap: 6 }}>
+                        <Text style={{ color: COLORS.muted, fontSize: 12, flex: 1 }}>Quantity</Text>
+                        <TouchableOpacity
+                          onPress={() => setEditQty(v => String(Math.max(0.5, Math.round((parseFloat(v) || 1) * 2 - 1) / 2)))}
+                          style={{ width: 30, height: 30, backgroundColor: '#2a2a4a', borderRadius: 6, alignItems: 'center', justifyContent: 'center' }}
+                        >
+                          <Text style={{ color: COLORS.text, fontSize: 18, lineHeight: 20 }}>−</Text>
+                        </TouchableOpacity>
+                        <TextInput
+                          value={editQty}
+                          onChangeText={setEditQty}
+                          keyboardType="decimal-pad"
+                          style={{ width: 44, textAlign: 'center', color: COLORS.text, fontSize: 13, fontWeight: '700', backgroundColor: '#2a2a4a', borderRadius: 6, paddingVertical: 5 }}
+                        />
+                        <TouchableOpacity
+                          onPress={() => setEditQty(v => String(Math.round((parseFloat(v) || 1) * 2 + 1) / 2))}
+                          style={{ width: 30, height: 30, backgroundColor: '#2a2a4a', borderRadius: 6, alignItems: 'center', justifyContent: 'center' }}
+                        >
+                          <Text style={{ color: COLORS.text, fontSize: 18, lineHeight: 20 }}>+</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={() => updateFoodQty(activeMeal.id, food.id, editQty)}
+                          style={{ backgroundColor: COLORS.success, borderRadius: 6, paddingHorizontal: 14, paddingVertical: 7, marginLeft: 4 }}
+                        >
+                          <Text style={{ color: '#000', fontWeight: '800', fontSize: 12 }}>Update</Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </View>
+                );
+              })
+            )}
+          </ScrollView>
+        )}
+
+        {/* ── ADD FOOD ── */}
+        {view === 'addFood' && (
+          <View style={{ flex: 1 }}>
+            {/* Mode toggle */}
+            <View style={{ flexDirection: 'row', margin: 16, backgroundColor: '#1c1c3a', borderRadius: 12, padding: 4 }}>
+              {[['search', 'Search'], ['quick', 'Quick Add'], ['recent', 'Recent']].map(([mode, label]) => (
+                <TouchableOpacity
+                  key={mode}
+                  onPress={() => setAddMode(mode)}
+                  style={{ flex: 1, paddingVertical: 8, borderRadius: 10, alignItems: 'center', backgroundColor: addMode === mode ? COLORS.accent : 'transparent' }}
+                >
+                  <Text style={{ color: addMode === mode ? '#fff' : COLORS.muted, fontWeight: '700', fontSize: 13 }}>{label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {addMode === 'recent' && (
+              <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 60 }}>
+                {recentMeals.length === 0 ? (
+                  <Text style={{ color: COLORS.muted, textAlign: 'center', marginTop: 40 }}>No previous meals logged yet</Text>
+                ) : (
+                  recentMeals.map((meal, idx) => {
+                    const preview = meal.foods.slice(0, 3).map(f => f.name).join(', ');
+                    const overflow = meal.foods.length > 3 ? ` +${meal.foods.length - 3} more` : '';
+                    return (
+                      <View key={idx} style={{ backgroundColor: '#1c1c3a', borderRadius: 14, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: '#ffffff10' }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                          <View style={{ flex: 1, marginRight: 10 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                              <Text style={{ color: COLORS.muted, fontSize: 11, fontWeight: '700', letterSpacing: 0.5 }}>{formatDateKey(meal.dateKey).toUpperCase()}</Text>
+                              <Text style={{ color: '#ffffff20', fontSize: 11 }}>·</Text>
+                              <Text style={{ color: COLORS.text, fontSize: 13, fontWeight: '800' }}>{meal.icon} {meal.name}</Text>
+                            </View>
+                            <Text style={{ color: COLORS.muted, fontSize: 12, marginBottom: 6 }} numberOfLines={2}>
+                              {preview}{overflow}
+                            </Text>
+
+                          </View>
+                          <TouchableOpacity
+                            onPress={() => addAllFoodsFromMeal(meal.foods)}
+                            style={{ backgroundColor: COLORS.success, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8, alignSelf: 'center' }}
+                          >
+                            <Text style={{ color: '#000', fontWeight: '800', fontSize: 13 }}>Add All</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    );
+                  })
+                )}
+              </ScrollView>
+            )}
+            {addMode === 'search' ? (
+              <View style={{ flex: 1 }}>
+                <View style={{ marginHorizontal: 16, marginBottom: 12, backgroundColor: '#1c1c3a', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#ffffff10' }}>
+                  <Text style={{ color: COLORS.muted, marginRight: 8 }}>🔍</Text>
+                  <TextInput
+                    value={searchQuery}
+                    onChangeText={v => { setSearchQuery(v); setSelectedFood(null); setQty('1'); }}
+                    placeholder="Search foods..."
+                    placeholderTextColor={COLORS.muted}
+                    style={{ flex: 1, color: COLORS.text, fontSize: 14 }}
+                    autoFocus
+                  />
+                  {searchQuery.length > 0 && (
+                    <TouchableOpacity onPress={() => { setSearchQuery(''); setSelectedFood(null); setQty('1'); }}>
+                      <Text style={{ color: COLORS.muted, fontSize: 16, paddingLeft: 8 }}>×</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+                <FlatList
+                  data={filteredDB}
+                  keyExtractor={item => item.name}
+                  keyboardShouldPersistTaps="handled"
+                  contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 60 }}
+                  renderItem={({ item: food }) => {
+                    const isSelected = selectedFood?.name === food.name;
+                    const q = isSelected ? Math.max(parseFloat(qty) || 1, 0.1) : 1;
+                    return (
+                      <TouchableOpacity
+                        activeOpacity={isSelected ? 1 : 0.7}
+                        onPress={() => { if (!isSelected) { setSelectedFood(food); setQty('1'); } }}
+                        style={{ backgroundColor: isSelected ? '#1e3a2a' : '#1c1c3a', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, marginBottom: 8, borderWidth: 1, borderColor: isSelected ? '#4ade8060' : 'transparent' }}
+                      >
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                          <TouchableOpacity
+                            onPress={() => onToggleFavorite?.(food.name)}
+                            style={{ width: 28, height: 28, alignItems: 'center', justifyContent: 'center', marginRight: 8 }}
+                          >
+                            <Text style={{ fontSize: food.isFavorite ? 16 : 13, opacity: food.isFavorite ? 1 : 0.12 }}>⭐</Text>
+                          </TouchableOpacity>
+                          <View style={{ flex: 1 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                              <Text style={{ color: isSelected ? COLORS.success : COLORS.text, fontWeight: '700', fontSize: 14 }}>{food.name}</Text>
+                              {food.unit ? <Text style={{ color: COLORS.muted, fontSize: 11 }}>{food.unit}</Text> : null}
+                              {food.unit ? (() => { const r = getRelatableUnit(food.unit); return r ? <Text style={{ color: '#ffffff22', fontSize: 10 }}>{r}</Text> : null; })() : null}
+                              {food.isCustom && <View style={{ backgroundColor: '#2a1a4a', borderRadius: 4, paddingHorizontal: 5, paddingVertical: 1 }}><Text style={{ color: '#a78bfa', fontSize: 9, fontWeight: '800', letterSpacing: 0.5 }}>MY FOOD</Text></View>}
+                            </View>
+                            <Text style={{ color: COLORS.muted, fontSize: 11, marginTop: 2 }}>
+                              {isSelected
+                                ? `${Math.round(food.calories * q)} kcal · ${Math.round(food.protein * q)}g P · ${Math.round(food.carbs * q)}g C · ${Math.round(food.fats * q)}g F`
+                                : `${food.calories} kcal · ${food.protein}g P · ${food.carbs}g C · ${food.fats}g F`}
+                            </Text>
+                          </View>
+                          {isSelected ? (
+                            <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 8, gap: 6 }}>
+                              <View style={{ alignItems: 'center', gap: 4 }}>
+                                <TouchableOpacity
+                                  onPress={() => setQty(v => String(Math.round((parseFloat(v) || 1) * 2 + 1) / 2))}
+                                  style={{ width: 30, height: 26, backgroundColor: '#2a2a4a', borderRadius: 6, alignItems: 'center', justifyContent: 'center' }}
+                                >
+                                  <Text style={{ color: COLORS.text, fontSize: 16, lineHeight: 18 }}>+</Text>
+                                </TouchableOpacity>
+                                <TextInput
+                                  value={qty}
+                                  onChangeText={setQty}
+                                  keyboardType="decimal-pad"
+                                  style={{ width: 38, textAlign: 'center', color: COLORS.text, fontSize: 13, fontWeight: '700', backgroundColor: '#2a2a4a', borderRadius: 6, paddingVertical: 3 }}
+                                />
+                                <TouchableOpacity
+                                  onPress={() => setQty(v => String(Math.max(0.5, Math.round((parseFloat(v) || 1) * 2 - 1) / 2)))}
+                                  style={{ width: 30, height: 26, backgroundColor: '#2a2a4a', borderRadius: 6, alignItems: 'center', justifyContent: 'center' }}
+                                >
+                                  <Text style={{ color: COLORS.text, fontSize: 16, lineHeight: 18 }}>−</Text>
+                                </TouchableOpacity>
+                              </View>
+                              <TouchableOpacity
+                                onPress={() => addFoodToMeal(food, qty)}
+                                style={{ width: 36, height: 36, backgroundColor: COLORS.success, borderRadius: 8, alignItems: 'center', justifyContent: 'center' }}
+                              >
+                                <Text style={{ color: '#000', fontSize: 22, fontWeight: '800', lineHeight: 24 }}>+</Text>
+                              </TouchableOpacity>
+                            </View>
+                          ) : (
+                            <TouchableOpacity
+                              onPress={() => { setSelectedFood(food); setQty('1'); }}
+                              style={{ width: 30, height: 30, backgroundColor: '#2a2a4a', borderRadius: 6, alignItems: 'center', justifyContent: 'center', marginLeft: 4 }}
+                            >
+                              <Text style={{ color: COLORS.success, fontSize: 20, fontWeight: '300', lineHeight: 22 }}>+</Text>
+                            </TouchableOpacity>
+                          )}
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  }}
+                  ListEmptyComponent={<Text style={{ color: COLORS.muted, textAlign: 'center', marginTop: 40 }}>No foods match your search</Text>}
+                />
+              </View>
+            ) : addMode === 'quick' ? (
+              <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 60 }}>
+                {[['Name', 'name', 'default'], ['Unit (e.g. 100g, scoop, slice)', 'unit', 'default'], ['Quantity', 'quantity', 'decimal-pad'], ['Calories (per serving)', 'calories', 'numeric'], ['Protein (g, per serving)', 'protein', 'numeric'], ['Carbs (g, per serving)', 'carbs', 'numeric'], ['Fats (g, per serving)', 'fats', 'numeric']].map(([label, key, kb]) => (
+                  <View key={key} style={{ marginBottom: 12 }}>
+                    <Text style={{ color: COLORS.muted, fontSize: 11, fontWeight: '700', letterSpacing: 0.8, marginBottom: 4 }}>{label.toUpperCase()}</Text>
+                    <TextInput
+                      value={quickMacros[key]}
+                      onChangeText={v => setQuickMacros(prev => ({ ...prev, [key]: v }))}
+                      keyboardType={kb}
+                      placeholder={key === 'quantity' ? '1' : label}
+                      placeholderTextColor="#ffffff30"
+                      style={{ backgroundColor: '#1c1c3a', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, color: COLORS.text, fontSize: 14, borderWidth: 1, borderColor: '#ffffff10' }}
+                    />
+                  </View>
+                ))}
+                {/* Live preview */}
+                {(() => {
+                  const q = Math.max(parseFloat(quickMacros.quantity) || 1, 0.1);
+                  const cal  = Math.round((parseInt(quickMacros.calories) || 0) * q);
+                  const prot = Math.round((parseInt(quickMacros.protein)  || 0) * q);
+                  const carbs = Math.round((parseInt(quickMacros.carbs)   || 0) * q);
+                  const fats = Math.round((parseInt(quickMacros.fats)    || 0) * q);
+                  if (cal + prot + carbs + fats === 0) return null;
+                  return (
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-around', backgroundColor: '#1a1a2e', borderRadius: 10, padding: 10, marginBottom: 12 }}>
+                      {[['🔥', cal, 'kcal'], ['💪', prot, 'g P'], ['🍚', carbs, 'g C'], ['🥑', fats, 'g F']].map(([icon, val, lbl]) => (
+                        <View key={lbl} style={{ alignItems: 'center' }}>
+                          <Text style={{ color: COLORS.success, fontSize: 13, fontWeight: '800' }}>{icon} {val}</Text>
+                          <Text style={{ color: COLORS.muted, fontSize: 10 }}>{lbl}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  );
+                })()}
+                <TouchableOpacity
+                  onPress={() => {
+                    if (!quickMacros.name.trim()) { Alert.alert('Enter a name for this food'); return; }
+                    const qty = Math.max(parseFloat(quickMacros.quantity) || 1, 0.1);
+                    const customFood = {
+                      name: quickMacros.name.trim(),
+                      unit: quickMacros.unit.trim(),
+                      calories: parseInt(quickMacros.calories) || 0,
+                      protein:  parseInt(quickMacros.protein)  || 0,
+                      carbs:    parseInt(quickMacros.carbs)    || 0,
+                      fats:     parseInt(quickMacros.fats)     || 0,
+                    };
+                    onSaveCustomFood?.(customFood);
+                    addFoodToMeal(customFood, qty);
+                  }}
+                  style={{ backgroundColor: COLORS.success, borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginTop: 8 }}
+                >
+                  <Text style={{ color: '#000', fontWeight: '800', fontSize: 15 }}>Add Food</Text>
+                </TouchableOpacity>
+              </ScrollView>
+            ) : null}
+          </View>
+        )}
+      </View>
+    </Modal>
+  );
+}
+
+function DayCard({ item, currentWeek, logs, completedWorkouts, isNext, onPress, nutritionData, nutritionGoal, expandedNutKey, setExpandedNutKey, nutKey, onLogMeals, mealsCount, onCompleteRest, screenHeight }) {
   const scale = useRef(new Animated.Value(1)).current;
   const nextPulse = useRef(new Animated.Value(1)).current;
-  const [calInput, setCalInput] = useState('');
-  const [protInput, setProtInput] = useState('');
-  const [carbInput, setCarbInput] = useState('');
-  const [fatInput, setFatInput] = useState('');
   const nutExpandAnim = useRef(new Animated.Value(0)).current;
   const nutExpanded = expandedNutKey === nutKey;
 
   useEffect(() => {
     Animated.spring(nutExpandAnim, { toValue: nutExpanded ? 1 : 0, useNativeDriver: false, friction: 9, tension: 55 }).start();
-    if (nutExpanded) {
-      const goalCal = nutritionGoal?.cal ?? 0;
-      const goalProt = nutritionGoal?.prot ?? 0;
-      setCalInput(nutritionData?.calories > 0 ? String(nutritionData.calories) : goalCal > 0 ? String(goalCal) : '');
-      setProtInput(nutritionData?.protein > 0 ? String(nutritionData.protein) : goalProt > 0 ? String(goalProt) : '');
-      setCarbInput(nutritionData?.carbs > 0 ? String(nutritionData.carbs) : '');
-      setFatInput(nutritionData?.fats > 0 ? String(nutritionData.fats) : '');
-    }
   }, [nutExpanded]);
 
   const toggleNut = () => {
@@ -824,14 +1738,20 @@ function DayCard({ item, currentWeek, logs, completedWorkouts, isNext, onPress, 
   let badge;
   if (isCompleted) {
     badge = (
-      <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#1e3a2a', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#3acd7060' }}>
-        <Text style={{ color: '#7edd9a', fontSize: 11, fontWeight: '700', lineHeight: 14 }}>✓</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#1e3a2a', borderRadius: 8, paddingHorizontal: 7, paddingVertical: 4, borderWidth: 1, borderColor: '#3acd7060' }}>
+        <Text style={{ color: '#7edd9a', fontSize: 10, fontWeight: '700' }}>✓</Text>
+        <Text style={{ color: '#7edd9a', fontSize: 10, fontWeight: '700' }}>Done</Text>
       </View>
     );
   } else if (isStarted) {
     badge = (
-      <View style={{ backgroundColor: '#f59e0b18', borderRadius: 10, paddingHorizontal: 9, paddingVertical: 4, borderWidth: 1, borderColor: '#f59e0b44' }}>
-        <Text style={{ color: '#f59e0b', fontSize: 10, fontWeight: '800', letterSpacing: 0.5 }}>IN PROGRESS</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+        <TouchableOpacity onPress={onPress} style={{ backgroundColor: '#f59e0b', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 }}>
+          <Text style={{ color: '#000', fontSize: 10, fontWeight: '900' }}>▶ Continue</Text>
+        </TouchableOpacity>
+        <View style={{ backgroundColor: '#f59e0b18', borderRadius: 8, paddingHorizontal: 7, paddingVertical: 4, borderWidth: 1, borderColor: '#f59e0b44' }}>
+          <Text style={{ color: '#f59e0b', fontSize: 10, fontWeight: '800', letterSpacing: 0.5 }}>IN PROGRESS</Text>
+        </View>
       </View>
     );
   } else if (isToday && !isRestDay) {
@@ -840,18 +1760,37 @@ function DayCard({ item, currentWeek, logs, completedWorkouts, isNext, onPress, 
         <Text style={{ color: '#e94560', fontSize: 10, fontWeight: '800', letterSpacing: 0.5 }}>🔥 TODAY</Text>
       </View>
     );
-  } else if (isRestDay && isToday) {
-    badge = <Text style={{ fontSize: 16, opacity: 0.55 }}>💤</Text>;
   } else if (isRestDay) {
-    badge = <Text style={{ fontSize: 16, opacity: 0.28 }}>💤</Text>;
-  } else if (isNext) {
+    const restDone = !!completedWorkouts[wKey];
     badge = (
-      <View style={{ backgroundColor: '#6c80ff28', borderRadius: 10, paddingHorizontal: 11, paddingVertical: 5, borderWidth: 1, borderColor: '#6c80ff70' }}>
-        <Text style={{ color: '#9fb0ff', fontSize: 11, fontWeight: '800', letterSpacing: 0.6 }}>NEXT</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+        {restDone && (
+          <TouchableOpacity
+            onPress={onPress}
+            style={{ backgroundColor: '#ffffff0e', borderRadius: 7, paddingHorizontal: 7, paddingVertical: 4, borderWidth: 1, borderColor: '#ffffff18' }}
+          >
+            <Text style={{ color: '#ffffffcc', fontSize: 10, fontWeight: '700' }}>Details</Text>
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity
+          onPress={onCompleteRest}
+          style={{ backgroundColor: restDone ? '#1e3a2a' : '#ffffff0e', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, borderWidth: 1, borderColor: restDone ? '#3acd7060' : '#ffffff18' }}
+        >
+          <Text style={{ color: restDone ? '#7edd9a' : '#ffffffcc', fontSize: 10, fontWeight: '700' }}>
+            {restDone ? '✓ Done' : 'Mark Complete'}
+          </Text>
+        </TouchableOpacity>
+        {!restDone && <Text style={{ fontSize: 16, opacity: 0.28 }}>💤</Text>}
       </View>
     );
+  } else if (isNext) {
+    badge = (
+      <TouchableOpacity onPress={onPress} style={{ backgroundColor: '#4ade80', borderRadius: 9, paddingHorizontal: 14, paddingVertical: 7 }}>
+        <Text style={{ color: '#000', fontSize: 13, fontWeight: '900' }}>Start Workout</Text>
+      </TouchableOpacity>
+    );
   } else {
-    badge = <Text style={{ color: COLORS.muted, fontSize: 22, fontWeight: '300', opacity: 0.5 }}>›</Text>;
+    badge = null;
   }
 
   const cardBg = isRestDay ? '#3a3a55' : isNext ? '#2a3470' : isToday && !isCompleted ? '#3a2848' : '#343465';
@@ -868,14 +1807,11 @@ function DayCard({ item, currentWeek, logs, completedWorkouts, isNext, onPress, 
       <Animated.View style={{ transform: [{ scale: nextPulse }] }}>
 
         {/* Nutrition card — in normal flow so it sets the wrapper height */}
-        <TouchableOpacity activeOpacity={1} onPress={() => { if (nutExpanded) setExpandedNutKey(null); }}
+        <TouchableOpacity activeOpacity={0.85} onPress={toggleNut}
           style={{
             backgroundColor: nutBg,
-            borderBottomLeftRadius: 24,
-            borderBottomRightRadius: 24,
-            borderTopLeftRadius: 16,
-            borderTopRightRadius: 16,
-            marginHorizontal: 12,
+            borderRadius: 14,
+            marginHorizontal: 8,
             paddingTop: 57,
             shadowColor: '#4ade80',
             shadowOffset: { width: 0, height: 2 },
@@ -886,7 +1822,7 @@ function DayCard({ item, currentWeek, logs, completedWorkouts, isNext, onPress, 
         >
           {/* Nutrition summary row — tap to expand */}
           {(() => {
-            const workoutDone = isCompleted;
+            const workoutDone = isCompleted || (isRestDay && !!completedWorkouts[wKey]);
             const goalCal = nutritionGoal?.cal ?? 0;
             const goalProt = nutritionGoal?.prot ?? 0;
             const calHit = nutritionData && goalCal > 0 && nutritionData.calories >= goalCal * 0.9;
@@ -894,94 +1830,106 @@ function DayCard({ item, currentWeek, logs, completedWorkouts, isNext, onPress, 
             const nutWinCount = (workoutDone ? 1 : 0) + (calHit ? 1 : 0) + (protHit ? 1 : 0);
             const totalNutWins = 3;
             return (
-              <TouchableOpacity onPress={toggleNut} activeOpacity={0.7} style={{ paddingHorizontal: 16, paddingBottom: 5, paddingTop: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                  {nutritionData ? (
-                    <>
-                      <Text style={{ color: '#4ade80', fontSize: 11, fontWeight: '600' }}>🔥 {nutritionData.calories.toLocaleString()}</Text>
-                      <Text style={{ color: '#4ade80', fontSize: 11, fontWeight: '600' }}>💪 {nutritionData.protein}g</Text>
-                      {nutritionData.carbs > 0 && <Text style={{ color: '#4ade80', fontSize: 11, fontWeight: '600' }}>🍚 {nutritionData.carbs}g</Text>}
-                      {nutritionData.fats > 0 && <Text style={{ color: '#4ade80', fontSize: 11, fontWeight: '600' }}>🥑 {nutritionData.fats}g</Text>}
-                      <Text style={{ color: '#4ade8066', fontSize: 10, fontWeight: '700' }}>{nutExpanded ? 'close' : 'edit'}</Text>
-                    </>
+              <View style={{ paddingHorizontal: 16, paddingBottom: 5, paddingTop: 4 }}>
+                <TouchableOpacity onPress={toggleNut} activeOpacity={0.7} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                  {/* Arrow — always leftmost, never moves */}
+                  <Text style={{ color: '#4ade8066', fontSize: 10, fontWeight: '700', width: 10 }}>{nutExpanded ? '▲' : '▼'}</Text>
+                  {/* Macros when collapsed, Meals stretches when expanded */}
+                  {!nutExpanded ? (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, flex: 1 }}>
+                      {nutritionData ? (
+                        <>
+                          <Text style={{ color: '#4ade80', fontSize: 11, fontWeight: '600' }}>🔥{nutritionData.calories.toLocaleString()}</Text>
+                          <Text style={{ color: '#ffffff20', fontSize: 10 }}>·</Text>
+                          <Text style={{ color: '#4ade80', fontSize: 11, fontWeight: '600' }}>💪{nutritionData.protein}g</Text>
+                          {nutritionData.carbs > 0 && <><Text style={{ color: '#ffffff20', fontSize: 10 }}>·</Text><Text style={{ color: '#4ade80', fontSize: 11, fontWeight: '600' }}>🍚{nutritionData.carbs}g</Text></>}
+                          {nutritionData.fats > 0 && <><Text style={{ color: '#ffffff20', fontSize: 10 }}>·</Text><Text style={{ color: '#4ade80', fontSize: 11, fontWeight: '600' }}>🥑{nutritionData.fats}g</Text></>}
+                        </>
+                      ) : (
+                        <>
+                          <Text style={{ color: '#ffffff30', fontSize: 11, fontWeight: '600' }}>🔥0 kcal</Text>
+                          <Text style={{ color: '#ffffff20', fontSize: 10 }}>·</Text>
+                          <Text style={{ color: '#ffffff30', fontSize: 11, fontWeight: '600' }}>💪0g</Text>
+                        </>
+                      )}
+                    </View>
                   ) : (
-                    <>
-                      <Text style={{ color: '#ffffff30', fontSize: 11, fontWeight: '600' }}>🔥 0 kcal</Text>
-                      <Text style={{ color: '#ffffff30', fontSize: 11, fontWeight: '600' }}>💪 0g</Text>
-                      <Text style={{ color: '#ffffff40', fontSize: 10, fontWeight: '700' }}>{nutExpanded ? 'close' : '+ log'}</Text>
-                    </>
+                    <View style={{ flex: 1 }} />
                   )}
-                </View>
-                <Text style={{ color: nutWinCount === totalNutWins ? '#4ade80' : '#ffffff40', fontSize: 10, fontWeight: '800', letterSpacing: 0.3 }}>daily wins: {nutWinCount}/{totalNutWins}</Text>
-              </TouchableOpacity>
+                  {/* Meals + Wins always on right */}
+                  <TouchableOpacity onPress={onLogMeals} style={{ backgroundColor: '#0d2e1e', borderRadius: 7, paddingHorizontal: 8, paddingVertical: 3, borderWidth: 1, borderColor: '#4ade8030', marginTop: 2 }}>
+                    <Text style={{ color: '#4ade80', fontSize: 10, fontWeight: '700' }}>Meals</Text>
+                  </TouchableOpacity>
+                  <Text style={{ color: nutWinCount === totalNutWins ? '#4ade80' : '#ffffff40', fontSize: 10, fontWeight: '800', letterSpacing: 0.3 }}>Wins: {nutWinCount}/{totalNutWins}</Text>
+                </TouchableOpacity>
+              </View>
             );
           })()}
 
-          {/* Expandable input area */}
-          <Animated.View style={{ maxHeight: nutExpandAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 240] }), overflow: 'hidden' }}>
-            <View style={{ paddingHorizontal: 14, paddingBottom: 12, paddingTop: 4, gap: 8 }}>
-              <View style={{ flexDirection: 'row', gap: 8 }}>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ color: '#4ade8088', fontSize: 9, fontWeight: '700', letterSpacing: 0.8, marginBottom: 4 }}>CALORIES</Text>
-                  <TextInput
-                    value={calInput}
-                    onChangeText={setCalInput}
-                    keyboardType="numeric"
-                    placeholder="e.g. 2400"
-                    placeholderTextColor="#ffffff20"
-                    style={{ backgroundColor: '#ffffff08', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 7, color: '#fff', fontSize: 13, borderWidth: 1, borderColor: '#4ade8030' }}
-                  />
+          {/* Expandable breakdown area */}
+          <Animated.View style={{ height: nutExpandAnim.interpolate({ inputRange: [0, 1], outputRange: [0, (screenHeight ?? 800) * 0.45] }), overflow: 'hidden' }}>
+            <ScrollView nestedScrollEnabled showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
+            {(() => {
+              const goalCal = nutritionGoal?.cal ?? 0;
+              const goalProt = nutritionGoal?.prot ?? 0;
+              if (!nutritionData || (!nutritionData.calories && !nutritionData.protein)) {
+                return (
+                  <View style={{ paddingHorizontal: 16, paddingBottom: 14, paddingTop: 6, alignItems: 'center' }}>
+                    <Text style={{ color: '#ffffff30', fontSize: 11, textAlign: 'center' }}>No nutrition logged yet.{'\n'}Tap "Log Meals" to get started.</Text>
+                  </View>
+                );
+              }
+              const macros = [
+                { icon: '🔥', label: 'CALORIES', value: nutritionData.calories.toLocaleString(), raw: nutritionData.calories, goal: goalCal, unit: 'kcal' },
+                { icon: '💪', label: 'PROTEIN',  value: `${nutritionData.protein}g`,  raw: nutritionData.protein,  goal: goalProt, unit: 'g' },
+                { icon: '🍚', label: 'CARBS',    value: `${nutritionData.carbs ?? 0}g`,   raw: nutritionData.carbs ?? 0,   goal: 0, unit: 'g' },
+                { icon: '🥑', label: 'FATS',     value: `${nutritionData.fats ?? 0}g`,    raw: nutritionData.fats ?? 0,    goal: 0, unit: 'g' },
+              ];
+              const hasMeals = nutritionData.meals && nutritionData.meals.some(m => m.foods && m.foods.length > 0);
+              return (
+                <View style={{ paddingHorizontal: 14, paddingBottom: 12, paddingTop: 6, gap: 8 }}>
+                  <View style={{ flexDirection: 'row', gap: 8 }}>
+                    {macros.slice(0, 2).map(m => {
+                      const pct = m.goal > 0 ? Math.min(1, m.raw / m.goal) : null;
+                      return (
+                        <View key={m.label} style={{ flex: 1, backgroundColor: '#ffffff07', borderRadius: 10, padding: 10, borderWidth: 1, borderColor: '#4ade8018' }}>
+                          <Text style={{ color: '#4ade80', fontSize: 16, fontWeight: '900' }}>{m.icon} {m.value}</Text>
+                          <Text style={{ color: '#ffffff40', fontSize: 9, fontWeight: '700', letterSpacing: 0.8, marginTop: 2 }}>{m.label}</Text>
+                          {pct !== null && (
+                            <>
+                              <View style={{ height: 2, backgroundColor: '#ffffff12', borderRadius: 1, marginTop: 6 }}>
+                                <View style={{ height: 2, backgroundColor: pct >= 0.9 ? '#4ade80' : '#facc15', borderRadius: 1, width: `${Math.round(pct * 100)}%` }} />
+                              </View>
+                              <Text style={{ color: '#ffffff25', fontSize: 9, marginTop: 2 }}>{Math.round(pct * 100)}% of {m.goal}{m.unit === 'kcal' ? '' : m.unit}</Text>
+                            </>
+                          )}
+                        </View>
+                      );
+                    })}
+                  </View>
+                  <View style={{ flexDirection: 'row', gap: 8 }}>
+                    {macros.slice(2).map(m => (
+                      <View key={m.label} style={{ flex: 1, backgroundColor: '#ffffff07', borderRadius: 10, padding: 10, borderWidth: 1, borderColor: '#4ade8018' }}>
+                        <Text style={{ color: '#4ade80', fontSize: 16, fontWeight: '900' }}>{m.icon} {m.value}</Text>
+                        <Text style={{ color: '#ffffff40', fontSize: 9, fontWeight: '700', letterSpacing: 0.8, marginTop: 2 }}>{m.label}</Text>
+                      </View>
+                    ))}
+                  </View>
+                  {hasMeals && (
+                    <View style={{ backgroundColor: '#ffffff06', borderRadius: 10, padding: 10, borderWidth: 1, borderColor: '#ffffff10', gap: 4 }}>
+                      <Text style={{ color: '#ffffff40', fontSize: 9, fontWeight: '700', letterSpacing: 0.8, marginBottom: 2 }}>BY MEAL</Text>
+                      {nutritionData.meals.filter(m => m.foods && m.foods.length > 0).map(m => (
+                        <View key={m.id} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Text style={{ color: '#ffffff80', fontSize: 11 }}>{m.icon} {m.name}</Text>
+                          <Text style={{ color: '#4ade8099', fontSize: 11, fontWeight: '700' }}>{m.totals.calories} kcal · {m.totals.protein}g P</Text>
+                        </View>
+                      ))}
+                    </View>
+                  )}
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ color: '#4ade8088', fontSize: 9, fontWeight: '700', letterSpacing: 0.8, marginBottom: 4 }}>PROTEIN (g)</Text>
-                  <TextInput
-                    value={protInput}
-                    onChangeText={setProtInput}
-                    keyboardType="numeric"
-                    placeholder="e.g. 180"
-                    placeholderTextColor="#ffffff20"
-                    style={{ backgroundColor: '#ffffff08', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 7, color: '#fff', fontSize: 13, borderWidth: 1, borderColor: '#4ade8030' }}
-                  />
-                </View>
-              </View>
-              <View style={{ flexDirection: 'row', gap: 8 }}>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ color: '#4ade8088', fontSize: 9, fontWeight: '700', letterSpacing: 0.8, marginBottom: 4 }}>CARBS (g)</Text>
-                  <TextInput
-                    value={carbInput}
-                    onChangeText={setCarbInput}
-                    keyboardType="numeric"
-                    placeholder="e.g. 310"
-                    placeholderTextColor="#ffffff20"
-                    style={{ backgroundColor: '#ffffff08', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 7, color: '#fff', fontSize: 13, borderWidth: 1, borderColor: '#4ade8030' }}
-                  />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ color: '#4ade8088', fontSize: 9, fontWeight: '700', letterSpacing: 0.8, marginBottom: 4 }}>FATS (g)</Text>
-                  <TextInput
-                    value={fatInput}
-                    onChangeText={setFatInput}
-                    keyboardType="numeric"
-                    placeholder="e.g. 85"
-                    placeholderTextColor="#ffffff20"
-                    style={{ backgroundColor: '#ffffff08', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 7, color: '#fff', fontSize: 13, borderWidth: 1, borderColor: '#4ade8030' }}
-                  />
-                </View>
-              </View>
-              <TouchableOpacity
-                onPress={() => {
-                  const cal = parseInt(calInput) || 0;
-                  const prot = parseInt(protInput) || 0;
-                  const carbs = parseInt(carbInput) || 0;
-                  const fats = parseInt(fatInput) || 0;
-                  onSaveNutrition(cal, prot, carbs, fats);
-                  setExpandedNutKey(null);
-                }}
-                style={{ backgroundColor: '#4ade80', borderRadius: 8, paddingVertical: 8, alignItems: 'center' }}
-              >
-                <Text style={{ color: '#000', fontWeight: '800', fontSize: 13 }}>Save →</Text>
-              </TouchableOpacity>
-            </View>
+              );
+            })()}
+            </ScrollView>
           </Animated.View>
         </TouchableOpacity>
 
@@ -1007,9 +1955,10 @@ function DayCard({ item, currentWeek, logs, completedWorkouts, isNext, onPress, 
         >
           {/* Left accent bar */}
           {!isRestDay && (
-            <View style={{ width: isNext ? 4 : 3, backgroundColor: isNext ? '#7b8fff' : isCompleted ? '#3a3a5a' : accentColor, borderRadius: 2, marginVertical: 14, marginLeft: 12, opacity: isNext ? 1 : isCompleted ? 0.5 : isToday && !isCompleted ? 1 : 0.7 }} />
+            <View style={{ width: 3, backgroundColor: isCompleted ? '#3a3a5a' : accentColor, borderRadius: 2, marginVertical: 14, marginLeft: 12, opacity: isCompleted ? 0.5 : isToday && !isCompleted ? 1 : 0.7 }} />
           )}
-          <View style={{ flex: 1, paddingHorizontal: 18, paddingVertical: 9, opacity: isCompleted ? 0.55 : 1 }}>
+          <View style={{ flex: 1, paddingHorizontal: 18, paddingTop: 9, paddingBottom: 10 }}>
+            {/* Top row: name + badge */}
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <View style={{ flex: 1 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', gap: 6 }}>
@@ -1018,14 +1967,21 @@ function DayCard({ item, currentWeek, logs, completedWorkouts, isNext, onPress, 
                     <Text style={{ color: isRestDay ? '#6a6a8a' : '#ffffff77', fontSize: 13 }}>– {workoutLabel}</Text>
                   ) : null}
                 </View>
-                <Text style={{ color: isRestDay ? '#4a4a6a' : '#ffffff44', fontSize: 12, marginTop: 4 }}>
+                <Text style={{ color: isRestDay ? '#4a4a6a' : '#ffffff44', fontSize: 12, marginTop: 3 }}>
                   {isRestDay ? 'Rest & Recovery' : `${workoutExs.length} exercises`}
                 </Text>
               </View>
-              <View style={{ paddingLeft: 8, alignItems: 'center', minWidth: 56 }}>
-                {badge}
-              </View>
+              {isCompleted && (
+                <TouchableOpacity
+                  onPress={onPress}
+                  style={{ backgroundColor: '#ffffff0e', borderRadius: 7, paddingHorizontal: 7, paddingVertical: 4, borderWidth: 1, borderColor: '#ffffff18', marginLeft: 4 }}
+                >
+                  <Text style={{ color: '#ffffffcc', fontSize: 10, fontWeight: '700' }}>Details</Text>
+                </TouchableOpacity>
+              )}
+              {badge ? <View style={{ paddingLeft: 4, alignItems: 'center' }}>{badge}</View> : null}
             </View>
+            {/* CTA row */}
           </View>
         </TouchableOpacity>
 
@@ -1526,6 +2482,11 @@ function Root() {
   const [dailyWins, setDailyWins] = useState({});
   const [showNutritionLogModal, setShowNutritionLogModal] = useState(false);
   const [expandedNutKey, setExpandedNutKey] = useState(null);
+  const planScrollOffsetRef = useRef(0);
+  const planSavedScrollOffsetRef = useRef(0);
+  const [mealLogModalKey, setMealLogModalKey] = useState(null); // nutKey when modal is open
+  const [customFoods, setCustomFoods] = useState([]);
+  const [favoriteFoods, setFavoriteFoods] = useState([]); // array of food names
   const [nutritionLogInput, setNutritionLogInput] = useState({ calories: '', protein: '' });
   const [nutritionLogDate, setNutritionLogDate] = useState('');
   const [stretchImgModal, setStretchImgModal] = useState(null);
@@ -1656,12 +2617,14 @@ function Root() {
                 en.programWeek === week
               );
             });
-            if (hasLogs) validated[key] = true;
+            if (hasLogs || dayTitle.includes('Rest')) validated[key] = completedRaw[key];
           }
           setCompletedWorkouts(validated);
           if (data.restTimerEnabled !== undefined) setRestTimerEnabled(data.restTimerEnabled);
           if (data.profile) setProfileForm(f => ({ ...f, ...data.profile }));
           if (data.nutritionHistory) setNutritionHistory(data.nutritionHistory);
+          if (data.customFoods) setCustomFoods(data.customFoods);
+          if (data.favoriteFoods) setFavoriteFoods(data.favoriteFoods);
           if (data.nutritionResult) setNutritionResult(data.nutritionResult);
           if (data.dailyWins) setDailyWins(data.dailyWins);
           if (data.weightsPromptDismissed) setWeightsPromptDismissed(true);
@@ -1939,6 +2902,8 @@ function Root() {
       setNutritionHistory({});
       setNutritionResult(null);
       setDailyWins({});
+      setCustomFoods([]);
+      setFavoriteFoods([]);
       setPlan(null);
       setSelectedDay(null);
       setSelectedExercise(null);
@@ -1978,6 +2943,8 @@ function Root() {
       setNutritionHistory({});
       setNutritionResult(null);
       setDailyWins({});
+      setCustomFoods(found.customFoods || []);
+      setFavoriteFoods(found.favoriteFoods || []);
       setSuggestedWeights(null);
       if (found.profile) setProfileForm(f => ({ ...f, ...found.profile }));
       const foundLogs = found.logs || {};
@@ -1991,7 +2958,7 @@ function Root() {
         const hasLogs = Object.keys(foundLogs).some(lk =>
           lk.startsWith(dayTitle + '|') && (foundLogs[lk] || []).some(en => en.programWeek === week)
         );
-        if (hasLogs) validated[key] = true;
+        if (hasLogs || dayTitle.includes('Rest')) validated[key] = completedRaw[key];
       }
       setCompletedWorkouts(validated);
       if (found.restTimerEnabled !== undefined) setRestTimerEnabled(found.restTimerEnabled);
@@ -4265,70 +5232,64 @@ function Root() {
               const hasLog = dayExs.some(e => (logs[logKey(d.day, e)] || []).some(en => en.programWeek === currentWeek));
               return !!completedWorkouts[wk] && hasLog;
             });
+          const nextDay = plan?.find(d => !d.day.includes('Rest') && !completedWorkouts[`${d.day}|${currentWeek}`]);
+          const nextDayStarted = nextDay ? nextDay.exercises.some(e => (logs[logKey(nextDay.day, e)] || []).some(en => en.programWeek === currentWeek)) : false;
           return (
             <View style={{ marginBottom: 12 }}>
-              <TouchableOpacity activeOpacity={0.85} onPress={() => {
-                  const toVal = weekCardExpanded ? 0 : 1;
-                  setWeekCardExpanded(!weekCardExpanded);
-                  Animated.spring(weekCardAnim, { toValue: toVal, useNativeDriver: false, friction: 9, tension: 55 }).start();
-                }}
-                style={{ borderRadius: 20, shadowColor: COLORS.accent, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.2, shadowRadius: 24, elevation: 8 }}>
-                <LinearGradient
-                  colors={['#1e1040', '#0e1630', '#0a0a1a']}
-                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                  style={{ borderRadius: 16, paddingHorizontal: 18, paddingVertical: 12, borderWidth: 1, borderColor: '#e9456028', borderTopColor: '#e9456055' }}
-                >
-                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                    <View>
-                      <Text style={{ color: COLORS.muted, fontSize: 10, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 2 }}>Current Week</Text>
-                      <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 5 }}>
-                        <Text style={{ color: COLORS.text, fontWeight: '900', fontSize: 28, letterSpacing: -1 }}>{currentWeek}</Text>
-                        <Text style={{ color: COLORS.muted, fontSize: 14 }}>/ {TOTAL_WEEKS}</Text>
-                      </View>
-                    </View>
-                    <View style={{ flexDirection: 'row', gap: 6 }}>
-                      <TouchableOpacity onPress={() => { if (currentWeek > 1) changeWeek(currentWeek - 1); }} style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: '#2a2a4a', alignItems: 'center', justifyContent: 'center', opacity: currentWeek > 1 ? 1 : 0.3 }}>
-                        <Text style={{ color: COLORS.text, fontSize: 18, fontWeight: '700', lineHeight: 22 }}>‹</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity onPress={() => { if (currentWeek < TOTAL_WEEKS) changeWeek(currentWeek + 1); }} style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: '#2a2a4a', alignItems: 'center', justifyContent: 'center', opacity: currentWeek < TOTAL_WEEKS ? 1 : 0.3 }}>
-                        <Text style={{ color: COLORS.text, fontSize: 18, fontWeight: '700', lineHeight: 22 }}>›</Text>
-                      </TouchableOpacity>
-                    </View>
+              <LinearGradient
+                colors={['#1e1040', '#0e1630', '#0a0a1a']}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                style={{ borderRadius: 16, paddingHorizontal: 18, paddingVertical: 16, borderWidth: 1, borderColor: '#ffffff12' }}
+              >
+                {/* Header */}
+                <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
+                  <View>
+                    <Text style={{ color: COLORS.muted, fontSize: 10, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 3 }}>Week {currentWeek} of {TOTAL_WEEKS}</Text>
+                    <Text style={{ color: COLORS.text, fontSize: 17, fontWeight: '900' }}>
+                      {weekComplete ? '🏆 Week Complete!' : `${completedDays} / ${workoutDays.length} sessions done`}
+                    </Text>
                   </View>
-                  <View style={{ marginBottom: 8 }}>
-                    <AnimatedProgressBar key={screen} progress={progress} height={6} color={COLORS.accent} trackColor="#2a2a4a" glowColor={COLORS.accent} delay={200} />
+                  <View style={{ flexDirection: 'row', gap: 6, marginTop: 2 }}>
+                    <TouchableOpacity onPress={() => { if (currentWeek > 1) changeWeek(currentWeek - 1); }} style={{ width: 30, height: 30, borderRadius: 8, backgroundColor: '#2a2a4a', alignItems: 'center', justifyContent: 'center', opacity: currentWeek > 1 ? 1 : 0.3 }}>
+                      <Text style={{ color: COLORS.text, fontSize: 16, fontWeight: '700', lineHeight: 20 }}>‹</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => { if (currentWeek < TOTAL_WEEKS) changeWeek(currentWeek + 1); }} style={{ width: 30, height: 30, borderRadius: 8, backgroundColor: '#2a2a4a', alignItems: 'center', justifyContent: 'center', opacity: currentWeek < TOTAL_WEEKS ? 1 : 0.3 }}>
+                      <Text style={{ color: COLORS.text, fontSize: 16, fontWeight: '700', lineHeight: 20 }}>›</Text>
+                    </TouchableOpacity>
                   </View>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                      <Text style={{ color: COLORS.text, fontSize: 13, fontWeight: '700' }}>{completedDays} / {workoutDays.length} sessions</Text>
-                      <Text style={{ color: '#ffffff25', fontSize: 13 }}>•</Text>
-                      <Text style={{ color: COLORS.muted, fontSize: 13 }}>{workoutDays.length - completedDays} left</Text>
+                </View>
+
+                {/* Progress bar */}
+                <View style={{ marginBottom: 14 }}>
+                  <AnimatedProgressBar key={`${screen}_${currentWeek}`} progress={progress} height={5} color="#4ade80" trackColor="#2a2a4a" glowColor="#4ade80" delay={200} />
+                </View>
+
+                {/* CTAs */}
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                  {weekComplete ? (
+                    <View style={{ flex: 1, backgroundColor: '#0d2e1e', borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: '#4ade8040' }}>
+                      <Text style={{ color: '#4ade80', fontWeight: '900', fontSize: 14 }}>🏆 Week Complete</Text>
                     </View>
-                    {weekComplete && !weekCardExpanded && (
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                        <Text style={{ fontSize: 14 }}>🏆</Text>
-                        <Text style={{ color: '#4ade80', fontSize: 13, fontWeight: '700' }}>Week complete</Text>
-                      </View>
-                    )}
-                  </View>
-                  <Animated.View style={{ maxHeight: weekCardAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 200] }), overflow: 'hidden' }}>
-                    <View style={{ marginTop: 16, paddingTop: 14, borderTopWidth: 1, borderTopColor: '#ffffff0a', gap: 10 }}>
-                      {weekComplete && (
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                          <Text style={{ fontSize: 18 }}>🏆</Text>
-                          <Text style={{ color: '#4ade80', fontSize: 13, fontWeight: '700' }}>Week complete — you crushed all {workoutDays.length} sessions!</Text>
-                        </View>
-                      )}
-                      <TouchableOpacity
-                        onPress={() => { setWeekDetailFrom('plan'); setScreen('weekDetail'); }}
-                        style={{ borderRadius: 10, backgroundColor: '#ffffff08', borderWidth: 1, borderColor: '#ffffff12', paddingVertical: 11, alignItems: 'center' }}
-                      >
-                        <Text style={{ color: COLORS.text, fontSize: 13, fontWeight: '700' }}>View Week Details →</Text>
-                      </TouchableOpacity>
+                  ) : nextDay ? (
+                    <TouchableOpacity
+                      onPress={() => navigateToDay(nextDay)}
+                      style={{ flex: 1, backgroundColor: '#4ade80', borderRadius: 12, paddingVertical: 14, alignItems: 'center' }}
+                    >
+                      <Text style={{ color: '#000', fontWeight: '900', fontSize: 14 }}>{nextDayStarted ? '▶  Resume Workout' : '▶  Start Workout'}</Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <View style={{ flex: 1, backgroundColor: '#1a1a2e', borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: '#ffffff12' }}>
+                      <Text style={{ color: COLORS.muted, fontWeight: '700', fontSize: 14 }}>No workouts left</Text>
                     </View>
-                  </Animated.View>
-                </LinearGradient>
-              </TouchableOpacity>
+                  )}
+                  <TouchableOpacity
+                    onPress={() => planFlatListRef.current?.scrollToIndex({ index: 0, animated: true, viewPosition: 0 })}
+                    style={{ paddingHorizontal: 18, backgroundColor: '#ffffff0a', borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: '#ffffff15' }}
+                  >
+                    <Text style={{ color: COLORS.text, fontWeight: '700', fontSize: 14 }}>View Plan</Text>
+                  </TouchableOpacity>
+                </View>
+              </LinearGradient>
             </View>
           );
         })()}
@@ -4412,6 +5373,8 @@ function Root() {
           data={plan}
           keyExtractor={(_, i) => i.toString()}
           getItemLayout={(_, index) => ({ length: 116, offset: 116 * index, index })}
+          onScroll={(e) => { planScrollOffsetRef.current = e.nativeEvent.contentOffset.y; }}
+          scrollEventThrottle={16}
           onScrollToIndexFailed={({ index }) => {
             setTimeout(() => planFlatListRef.current?.scrollToIndex({ index, animated: false, viewPosition: 0.1 }), 100);
           }}
@@ -4433,7 +5396,7 @@ function Root() {
             </View>
           }
           ListFooterComponent={<View style={{ height: 32 }} />}
-          renderItem={({ item }) => {
+          renderItem={({ item, index }) => {
             // Find the actual next workout globally (lowest week with an incomplete day)
             let activeWeek = null;
             for (let w = 1; w <= TOTAL_WEEKS; w++) {
@@ -4446,6 +5409,15 @@ function Root() {
               const planDayIdx = plan ? plan.findIndex(d => d.day === item.day) : -1;
               const nutKey = planDayIdx !== -1 ? `w${currentWeek}_d${planDayIdx + 1}` : null;
               const nutritionData = (nutKey && nutritionHistory[nutKey]) || null;
+              const handleSetExpandedNutKey = (newKey) => {
+                if (newKey !== null) {
+                  planSavedScrollOffsetRef.current = planScrollOffsetRef.current;
+                  setTimeout(() => planFlatListRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0 }), 50);
+                } else {
+                  setTimeout(() => planFlatListRef.current?.scrollToOffset({ offset: planSavedScrollOffsetRef.current, animated: true }), 50);
+                }
+                setExpandedNutKey(newKey);
+              };
               return (
                 <DayCard
                   item={item}
@@ -4457,10 +5429,28 @@ function Root() {
                   nutKey={nutKey}
                   nutritionGoal={{ cal: nutritionResult?.target ?? nutritionResult?.tdee ?? 0, prot: nutritionResult?.proteinG ?? 0 }}
                   expandedNutKey={expandedNutKey}
-                  setExpandedNutKey={setExpandedNutKey}
+                  setExpandedNutKey={handleSetExpandedNutKey}
+                  screenHeight={screenHeight}
+                  mealsCount={nutritionData?.meals ? nutritionData.meals.reduce((s, m) => s + m.foods.length, 0) : 0}
+                  onLogMeals={() => nutKey && setMealLogModalKey(nutKey)}
+                  onCompleteRest={() => {
+                    const key = `${item.day}|${currentWeek}`;
+                    const newVal = !completedWorkouts[key];
+                    const updatedCW = { ...completedWorkouts, [key]: newVal };
+                    setCompletedWorkouts(updatedCW);
+                    if (nutKey) {
+                      setDailyWins(w => {
+                        const updated = { ...w, [nutKey]: { ...(w[nutKey] || {}), workout: newVal } };
+                        if (user) updateDoc(doc(db, 'users', user.email), { completedWorkouts: updatedCW, dailyWins: updated });
+                        return updated;
+                      });
+                    } else {
+                      if (user) updateDoc(doc(db, 'users', user.email), { completedWorkouts: updatedCW });
+                    }
+                  }}
                   onSaveNutrition={(cal, prot, carbs, fats) => {
                     if (!nutKey) return;
-                    const updatedHistory = { ...nutritionHistory, [nutKey]: { calories: cal, protein: prot, carbs, fats } };
+                    const updatedHistory = { ...nutritionHistory, [nutKey]: { ...nutritionHistory[nutKey], calories: cal, protein: prot, carbs, fats } };
                     setNutritionHistory(updatedHistory);
                     if (user) updateDoc(doc(db, 'users', user.email), { nutritionHistory: updatedHistory });
                     const protGoal = nutritionResult?.proteinG || 0;
@@ -4478,6 +5468,57 @@ function Root() {
           }}
         />
         </Animated.View>
+
+        {/* Meal Log Modal */}
+        <MealLogModal
+          visible={!!mealLogModalKey}
+          onClose={() => setMealLogModalKey(null)}
+          nutKey={mealLogModalKey}
+          mealsData={(mealLogModalKey && nutritionHistory[mealLogModalKey]?.meals) || null}
+          nutritionHistory={nutritionHistory}
+          customFoods={customFoods}
+          favoriteFoods={favoriteFoods}
+          onLogout={() => { setMealLogModalKey(null); handleLogout(); }}
+          onSettings={() => { setMealLogModalKey(null); setSettingsFrom(screen); setScreen('settings'); }}
+          onToggleFavorite={(name) => {
+            const updated = favoriteFoods.includes(name)
+              ? favoriteFoods.filter(n => n !== name)
+              : [...favoriteFoods, name];
+            setFavoriteFoods(updated);
+            if (user) updateDoc(doc(db, 'users', user.email), { favoriteFoods: updated });
+          }}
+          onSaveCustomFood={(food) => {
+            const exists = customFoods.findIndex(f => f.name.toLowerCase() === food.name.toLowerCase());
+            const updated = exists >= 0
+              ? customFoods.map((f, i) => i === exists ? food : f)
+              : [...customFoods, food];
+            setCustomFoods(updated);
+            if (user) updateDoc(doc(db, 'users', user.email), { customFoods: updated });
+          }}
+          onSaveMeals={(meals, dailyTotals) => {
+            if (!mealLogModalKey) return;
+            const updatedHistory = {
+              ...nutritionHistory,
+              [mealLogModalKey]: {
+                ...nutritionHistory[mealLogModalKey],
+                calories: dailyTotals.calories,
+                protein: dailyTotals.protein,
+                carbs: dailyTotals.carbs,
+                fats: dailyTotals.fats,
+                meals,
+              },
+            };
+            setNutritionHistory(updatedHistory);
+            if (user) updateDoc(doc(db, 'users', user.email), { nutritionHistory: updatedHistory });
+            const protGoal = nutritionResult?.proteinG || 0;
+            const calGoal = nutritionResult?.target ?? nutritionResult?.tdee ?? 0;
+            setDailyWins(w => {
+              const updated = { ...w, [mealLogModalKey]: { ...(w[mealLogModalKey] || {}), protein: protGoal > 0 && dailyTotals.protein >= protGoal, calories: calGoal > 0 && dailyTotals.calories >= calGoal * 0.9 && dailyTotals.calories <= calGoal * 1.1 } };
+              if (user) updateDoc(doc(db, 'users', user.email), { dailyWins: updated });
+              return updated;
+            });
+          }}
+        />
 
         {/* Update Weights Prompt */}
         <Modal visible={showUpdateWeightsPrompt} transparent animationType="fade" onRequestClose={() => setShowUpdateWeightsPrompt(false)}>
@@ -6019,7 +7060,7 @@ function Root() {
                             setTempWeightVal(newW);
                             setBarPlates(newW >= 45 ? weightToPlates(newW) : []);
                           }}
-                          renderItem={({ item: w }) => {
+                          renderItem={({ item: w, index }) => {
                             const isSelected = Math.abs(w - (tempWeightVal ?? selectedVal)) < 0.01;
                             const label = `${w % 1 === 0 ? w : w.toFixed(1)} lbs`;
                             const milestone = milestones[w];
@@ -6389,7 +7430,7 @@ const styles = StyleSheet.create({
   stretchLabel: { color: COLORS.text, fontSize: 13, fontWeight: '600' },
   stretchDuration: { color: COLORS.muted, fontSize: 11 },
   exerciseCardInfo: { flex: 1 },
-  exImgBox: { width: 120, height: 76, borderRadius: 8, backgroundColor: COLORS.input, justifyContent: 'center', alignItems: 'center' },
+  exImgBox: { width: 120, height: 76, borderRadius: 8, backgroundColor: COLORS.bg, justifyContent: 'center', alignItems: 'center' },
   exImgEmoji: { fontSize: 30 },
   exImg: { width: 120, height: 76, borderRadius: 8, overflow: 'hidden' },
   progressImgRow: { alignItems: 'center', marginBottom: 16 },
