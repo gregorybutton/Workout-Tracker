@@ -5722,7 +5722,7 @@ function Root() {
               const handleSetExpandedNutKey = (newKey) => {
                 if (newKey !== null) {
                   planSavedScrollIndexRef.current = index;
-                  Animated.timing(weekCardAnim2, { toValue: 0, duration: 200, useNativeDriver: false }).start();
+                  Animated.timing(weekCardAnim2, { toValue: 0, duration: 400, useNativeDriver: false }).start();
                   setExpandedNutKey(newKey);
                 } else {
                   setExpandedNutKey(null);
@@ -5730,8 +5730,10 @@ function Root() {
                   // Wait for full plan data to be restored before scrolling
                   setTimeout(() => {
                     planFlatListRef.current?.scrollToIndex({ index: savedIdx, animated: false, viewPosition: 0.3 });
+                  }, 600);
+                  setTimeout(() => {
                     Animated.timing(weekCardAnim2, { toValue: 1, duration: 250, useNativeDriver: false }).start();
-                  }, 400);
+                  }, 700);
                 }
               };
               return (

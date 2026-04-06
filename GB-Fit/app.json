@@ -4,6 +4,7 @@
     "slug": "gb-fit",
     "version": "1.0.0",
     "orientation": "portrait",
+    "newArchEnabled": true,
     "ios": {
       "bundleIdentifier": "com.anonymous.gb-fit"
     }
