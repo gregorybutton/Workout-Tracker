@@ -7,6 +7,9 @@
     "newArchEnabled": true,
     "ios": {
       "bundleIdentifier": "com.anonymous.gb-fit"
-    }
+    },
+    "plugins": [
+      "expo-asset"
+    ]
   }
 }

@@ -10,6 +10,7 @@ import {
   Easing,
   FlatList,
   Image,
+  Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -19,6 +20,7 @@ import {
   TextInput,
   Switch,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   Vibration,
   useWindowDimensions,
   View,
@@ -2684,9 +2686,10 @@ function ConfettiEffect() {
   );
 }
 
-function ScrollPicker({ items, selectedValue, onValueChange, itemHeight = 46, width }) {
+function ScrollPicker({ items, selectedValue, onValueChange, itemHeight = 46, visibleRows = 5, width, onScrollStart, onScrollEnd }) {
   const scrollRef = useRef(null);
-  const containerHeight = itemHeight * 5;
+  const containerHeight = itemHeight * visibleRows;
+  const centerRow = Math.floor(visibleRows / 2);
   // Track the current committed index so we can avoid unnecessary re-renders
   const committedIdx = useRef(Math.max(0, items.indexOf(selectedValue)));
   // Resolve effective selected value (fall back to first item if empty/missing)
@@ -2697,7 +2700,7 @@ function ScrollPicker({ items, selectedValue, onValueChange, itemHeight = 46, wi
     const idx = Math.max(0, items.indexOf(effectiveSelected));
     committedIdx.current = idx;
     const timer = setTimeout(() => {
-      scrollRef.current?.scrollTo({ y: idx * itemHeight + itemHeight, animated: false });
+      scrollRef.current?.scrollTo({ y: idx * itemHeight, animated: false });
     }, 50);
     return () => clearTimeout(timer);
   }, []);
@@ -2707,27 +2710,32 @@ function ScrollPicker({ items, selectedValue, onValueChange, itemHeight = 46, wi
     const idx = Math.max(0, items.indexOf(effectiveSelected));
     if (idx !== committedIdx.current) {
       committedIdx.current = idx;
-      scrollRef.current?.scrollTo({ y: idx * itemHeight + itemHeight, animated: true });
+      scrollRef.current?.scrollTo({ y: idx * itemHeight, animated: true });
     }
   }, [effectiveSelected]);
 
-  function handleMomentumEnd(e) {
-    const idx = Math.max(0, Math.min(Math.round((e.nativeEvent.contentOffset.y - itemHeight) / itemHeight), items.length - 1));
-    committedIdx.current = idx;
-    onValueChange(items[idx]);
+  function handleScrollEnd(e) {
+    const idx = Math.max(0, Math.min(Math.round(e.nativeEvent.contentOffset.y / itemHeight), items.length - 1));
+    if (idx !== committedIdx.current) {
+      committedIdx.current = idx;
+      onValueChange(items[idx]);
+      scrollRef.current?.scrollTo({ y: idx * itemHeight, animated: true });
+    }
   }
 
   return (
     <View style={{ height: containerHeight, width, overflow: 'hidden', borderRadius: 8 }}>
       {/* Selection highlight band */}
-      <View pointerEvents="none" style={{ position: 'absolute', top: itemHeight * 2, left: 0, right: 0, height: itemHeight, backgroundColor: COLORS.accent + '18', borderTopWidth: 1, borderBottomWidth: 1, borderColor: COLORS.accent + '35', borderRadius: 8, zIndex: 1 }} />
+      <View pointerEvents="none" style={{ position: 'absolute', top: itemHeight * centerRow, left: 6, right: 6, height: itemHeight, backgroundColor: COLORS.accent + '20', borderTopWidth: 1, borderBottomWidth: 1, borderColor: COLORS.accent + '55', borderRadius: 8, zIndex: 1 }} />
       <ScrollView
         ref={scrollRef}
         showsVerticalScrollIndicator={false}
         snapToInterval={itemHeight}
         decelerationRate="fast"
-        contentContainerStyle={{ paddingVertical: itemHeight * 2 }}
-        onMomentumScrollEnd={handleMomentumEnd}
+        contentContainerStyle={{ paddingVertical: itemHeight * centerRow }}
+        onScrollBeginDrag={() => onScrollStart?.()}
+        onMomentumScrollEnd={(e) => { handleScrollEnd(e); onScrollEnd?.(); }}
+        onScrollEndDrag={(e) => { handleScrollEnd(e); onScrollEnd?.(); }}
         nestedScrollEnabled={true}
         scrollEventThrottle={16}
       >
@@ -2735,7 +2743,7 @@ function ScrollPicker({ items, selectedValue, onValueChange, itemHeight = 46, wi
           const isSelected = item === effectiveSelected;
           return (
             <View key={i} style={{ height: itemHeight, justifyContent: 'center', alignItems: 'center' }}>
-              <Text style={{ color: isSelected ? COLORS.text : COLORS.muted, fontSize: isSelected ? 13 : 11, fontWeight: isSelected ? '700' : '400', opacity: isSelected ? 1 : 0.45 }}>{item}</Text>
+              <Text style={{ color: isSelected ? COLORS.text : '#3a3a5a', fontSize: isSelected ? 17 : 13, fontWeight: isSelected ? '800' : '400' }}>{item}</Text>
             </View>
           );
         })}
@@ -2787,8 +2795,18 @@ function Root() {
   const [weightPickerIndex, setWeightPickerIndex] = useState(null);
   const [tempWeightVal, setTempWeightVal] = useState(null);
   const weightListRef = useRef(null);
+  const regNameRef   = useRef(null);
   const regEmailRef  = useRef(null);
   const regPassRef   = useRef(null);
+  const [nameSelection, setNameSelection] = useState(undefined);
+  const [emailSelection, setEmailSelection] = useState(undefined);
+  const [passSelection, setPassSelection] = useState(undefined);
+  const [outerScrollEnabled, setOuterScrollEnabled] = useState(true);
+  const ageInputRef = useRef(null);
+  const weightInputRef = useRef(null);
+  const [barWidth, setBarWidth] = useState(0);
+  const protAnim = useRef(new Animated.Value(0)).current;
+  const calAnim  = useRef(new Animated.Value(0)).current;
   const [repsPickerVisible, setRepsPickerVisible] = useState(false);
   const [repsPickerIndex, setRepsPickerIndex] = useState(null);
   const [authForm, setAuthForm] = useState({ name: 'Test Test', email: 'test@test.com', password: 'Unicycle12!' });
@@ -3498,12 +3516,17 @@ function Root() {
 
           {/* Full Name */}
           <View style={styles.authField}>
-            <Text style={{ color: COLORS.muted, fontSize: 16, marginRight: 12 }}>👤</Text>
+            <TouchableOpacity onPress={() => { setNameSelection({ start: 0, end: 0 }); regNameRef.current?.focus(); }}>
+              <Text style={{ color: COLORS.muted, fontSize: 16, marginRight: 12 }}>👤</Text>
+            </TouchableOpacity>
             <TextInput
+              ref={regNameRef}
               style={styles.authInput}
               placeholder="Full Name"
               placeholderTextColor={COLORS.muted}
               value={authForm.name}
+              selection={nameSelection}
+              onSelectionChange={() => setNameSelection(undefined)}
               onChangeText={v => setAuthForm(f => ({ ...f, name: v }))}
               autoFocus
               returnKeyType="next"
@@ -3519,13 +3542,17 @@ function Root() {
             return (
               <View>
                 <View style={[styles.authField, emailTouched && { borderColor: emailValid ? '#4ade8060' : '#e9456060', borderWidth: 1 }]}>
-                  <Text style={{ color: COLORS.muted, fontSize: 16, marginRight: 12 }}>✉</Text>
+                  <TouchableOpacity onPress={() => { setEmailSelection({ start: 0, end: 0 }); regEmailRef.current?.focus(); }}>
+                    <Text style={{ color: COLORS.muted, fontSize: 16, marginRight: 12 }}>✉</Text>
+                  </TouchableOpacity>
                   <TextInput
                     ref={regEmailRef}
                     style={styles.authInput}
                     placeholder="Email"
                     placeholderTextColor={COLORS.muted}
                     value={authForm.email}
+                    selection={emailSelection}
+                    onSelectionChange={() => setEmailSelection(undefined)}
                     onChangeText={v => setAuthForm(f => ({ ...f, email: v }))}
                     keyboardType="email-address"
                     autoCapitalize="none"
@@ -3549,13 +3576,17 @@ function Root() {
             return (
               <View>
                 <View style={[styles.authField, passTouched && { borderColor: passValid ? '#4ade8060' : '#e9456060', borderWidth: 1 }]}>
-                  <Text style={{ color: COLORS.muted, fontSize: 16, marginRight: 12 }}>🔒</Text>
+                  <TouchableOpacity onPress={() => { setPassSelection({ start: 0, end: 0 }); regPassRef.current?.focus(); }}>
+                    <Text style={{ color: COLORS.muted, fontSize: 16, marginRight: 12 }}>🔒</Text>
+                  </TouchableOpacity>
                   <TextInput
                     ref={regPassRef}
                     style={[styles.authInput, { flex: 1 }]}
                     placeholder="Password"
                     placeholderTextColor={COLORS.muted}
                     value={authForm.password}
+                    selection={passSelection}
+                    onSelectionChange={() => setPassSelection(undefined)}
                     onChangeText={v => setAuthForm(f => ({ ...f, password: v }))}
                     secureTextEntry={!showPassword}
                     returnKeyType="done"
@@ -3858,92 +3889,98 @@ function Root() {
       setScreen('processing');
     }
 
-    const inputStyle = { backgroundColor: COLORS.surface, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, color: COLORS.text, fontSize: 15, borderWidth: 1, borderColor: '#ffffff10', marginBottom: 12 };
-    const labelStyle = { color: COLORS.muted, fontSize: 12, fontWeight: '700', letterSpacing: 0.8, marginBottom: 6, marginTop: 4 };
-    const chipActive = { backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, borderWidth: 1, borderColor: COLORS.accent };
-    const chipInactive = { backgroundColor: COLORS.surface, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, borderWidth: 1, borderColor: '#ffffff10' };
+    const inputStyle = { backgroundColor: COLORS.surface, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 13, color: COLORS.text, fontSize: 15, borderWidth: 1, borderColor: '#ffffff18', marginBottom: 16 };
+    const labelStyle = { color: '#8888b0', fontSize: 13, fontWeight: '600', letterSpacing: 0.2, marginBottom: 8, marginTop: 8 };
+    const chipActive = { backgroundColor: COLORS.accent + '22', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 14, borderWidth: 2, borderColor: COLORS.accent };
+    const chipInactive = { backgroundColor: COLORS.surface, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 14, borderWidth: 1, borderColor: '#ffffff15' };
 
     return (
       <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         {/* Header */}
-        <View style={{ paddingHorizontal: 24, paddingTop: 60, paddingBottom: 12 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+        <View style={{ paddingHorizontal: 24, paddingTop: 56, paddingBottom: 8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 4 }}>
             {profileStep > 1 && (
               <TouchableOpacity onPress={() => setProfileStep(s => s - 1)}>
                 <Text style={{ color: COLORS.muted, fontSize: 22 }}>‹</Text>
               </TouchableOpacity>
             )}
             <View style={{ flex: 1 }}>
-              <Text style={{ color: COLORS.muted, fontSize: 12, fontWeight: '600', letterSpacing: 0.5 }}>{STEP_HEADLINES[profileStep - 1].eyebrow}</Text>
-              <Text style={{ color: COLORS.text, fontSize: 24, fontWeight: '900', marginTop: 2 }}>{STEP_HEADLINES[profileStep - 1].title}</Text>
+              <Text style={{ color: COLORS.text, fontSize: 26, fontWeight: '900' }}>{STEP_HEADLINES[profileStep - 1].title}</Text>
+              {profileStep === 1 && <Text style={{ color: '#6668a0', fontSize: 13, marginTop: 4 }}>Tell us a few basics so we can calculate your plan.</Text>}
             </View>
           </View>
-          {/* Progress bar */}
-          <View style={{ height: 4, backgroundColor: '#1e1e3a', borderRadius: 2, marginTop: 8 }}>
-            <View style={{ height: 4, backgroundColor: COLORS.accent, borderRadius: 2, width: `${(profileStep / TOTAL_STEPS) * 100}%` }} />
+          {/* Step label + progress bar — close together */}
+          <Text style={{ color: '#7070a0', fontSize: 12, fontWeight: '600', letterSpacing: 0.4, marginBottom: 6 }}>{STEP_HEADLINES[profileStep - 1].eyebrow}</Text>
+          <View style={{ height: 5, backgroundColor: '#13132a', borderRadius: 99 }}>
+            <View style={{ height: 5, backgroundColor: COLORS.accent, borderRadius: 99, width: `${(profileStep / TOTAL_STEPS) * 100}%`, shadowColor: COLORS.accent, shadowOpacity: 0.5, shadowRadius: 4 }} />
           </View>
         </View>
 
-        <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 120 }} keyboardShouldPersistTaps="always" showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 90 }} keyboardShouldPersistTaps="always" showsVerticalScrollIndicator={false} scrollEnabled={outerScrollEnabled}>
 
           {/* ── Step 1: Personal Info ── */}
           {profileStep === 1 && (
             <>
-              <Text style={labelStyle}>GENDER</Text>
+              <Text style={labelStyle}>Gender</Text>
               <View style={{ flexDirection: 'row', gap: 10, marginBottom: 20 }}>
                 {['Male', 'Female'].map(g => (
                   <TouchableOpacity key={g} style={[pf.gender === g ? chipActive : chipInactive, { flex: 1, alignItems: 'center' }]} onPress={() => setPF('gender', g)}>
-                    <Text style={{ color: pf.gender === g ? '#000' : COLORS.muted, fontWeight: '700' }}>{g}</Text>
+                    <Text style={{ color: pf.gender === g ? COLORS.accent : '#6668a0', fontWeight: '800', fontSize: 15 }}>{g}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
 
-              <Text style={labelStyle}>AGE</Text>
+              <Text style={labelStyle}>Age</Text>
               <TextInput
                 style={inputStyle}
-                placeholder="e.g. 28"
-                placeholderTextColor={COLORS.muted}
+                placeholder="28"
+                placeholderTextColor="#4a4a6a"
                 keyboardType="numeric"
                 value={pf.age}
                 onChangeText={v => setPF('age', v.replace(/[^0-9]/g, ''))}
               />
 
-              <Text style={labelStyle}>WEIGHT (LBS)</Text>
-              <TextInput
-                style={inputStyle}
-                placeholder="e.g. 185"
-                placeholderTextColor={COLORS.muted}
-                keyboardType="numeric"
-                value={pf.weightLbs}
-                onChangeText={v => setPF('weightLbs', v.replace(/[^0-9]/g, ''))}
-              />
-              <Text style={{ color: COLORS.muted, fontSize: 11, marginTop: -8, marginBottom: 16 }}>Used to calculate your daily calorie target</Text>
+              <Text style={labelStyle}>Weight</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.surface, borderRadius: 12, borderWidth: 1, borderColor: '#ffffff18', marginBottom: 6, paddingRight: 14 }}>
+                <TextInput
+                  style={{ flex: 1, paddingHorizontal: 14, paddingVertical: 13, color: COLORS.text, fontSize: 15 }}
+                  placeholder="185"
+                  placeholderTextColor="#4a4a6a"
+                  keyboardType="numeric"
+                  value={pf.weightLbs}
+                  onChangeText={v => setPF('weightLbs', v.replace(/[^0-9]/g, ''))}
+                />
+                <Text style={{ color: '#5555a0', fontWeight: '700', fontSize: 13 }}>lbs</Text>
+              </View>
+              <Text style={{ color: '#4a4a6a', fontSize: 11, marginBottom: 16 }}>Used to calculate your daily calorie target</Text>
 
-              <Text style={labelStyle}>HEIGHT</Text>
-              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 4, backgroundColor: COLORS.surface, borderRadius: 12, borderWidth: 1, borderColor: '#ffffff10' }}>
-                <View style={{ flex: 1, alignItems: 'center', paddingVertical: 5 }}>
-                  <Text style={{ color: COLORS.muted, fontSize: 9, fontWeight: '700', letterSpacing: 0.8, marginBottom: 2 }}>FT</Text>
+              <Text style={labelStyle}>Height</Text>
+              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 6, backgroundColor: COLORS.surface, borderRadius: 12, borderWidth: 1, borderColor: '#ffffff18' }}>
+                <View style={{ flex: 1, alignItems: 'center', paddingVertical: 8 }}>
+                  <Text style={{ color: '#5555a0', fontSize: 10, fontWeight: '700', letterSpacing: 1, marginBottom: 4 }}>ft</Text>
                   <ScrollPicker
                     items={['4', '5', '6', '7']}
                     selectedValue={pf.heightFt || '5'}
                     onValueChange={v => setPF('heightFt', v)}
-                    itemHeight={26}
-                    width={70}
+                    itemHeight={36}
+                    visibleRows={3}
+                    width={80}
                   />
                 </View>
-                <View style={{ width: 1, backgroundColor: '#ffffff10', marginVertical: 8 }} />
-                <View style={{ flex: 1, alignItems: 'center', paddingVertical: 5 }}>
-                  <Text style={{ color: COLORS.muted, fontSize: 9, fontWeight: '700', letterSpacing: 0.8, marginBottom: 2 }}>IN</Text>
+                <View style={{ width: 1, backgroundColor: '#ffffff10', marginVertical: 12 }} />
+                <View style={{ flex: 1, alignItems: 'center', paddingVertical: 8 }}>
+                  <Text style={{ color: '#5555a0', fontSize: 10, fontWeight: '700', letterSpacing: 1, marginBottom: 4 }}>in</Text>
                   <ScrollPicker
                     items={['0','1','2','3','4','5','6','7','8','9','10','11']}
                     selectedValue={pf.heightIn || '0'}
                     onValueChange={v => setPF('heightIn', v)}
-                    itemHeight={26}
-                    width={70}
+                    itemHeight={36}
+                    visibleRows={3}
+                    width={80}
                   />
                 </View>
               </View>
-              <Text style={{ color: COLORS.muted, fontSize: 11, marginBottom: 12 }}>Scroll to select your height</Text>
+              <Text style={{ color: '#4a4a6a', fontSize: 11, marginBottom: 12 }}>Scroll to select your height</Text>
 
               <Animated.View style={{ opacity: bmiAnim, transform: [{ translateY: bmiAnim.interpolate({ inputRange: [0, 1], outputRange: [8, 0] }) }, { scale: bmiAnim.interpolate({ inputRange: [0, 1], outputRange: [0.95, 1] }) }] }}>
                 {bmi && <AnimatedBmiCard bmi={bmi} />}
@@ -3955,7 +3992,7 @@ function Root() {
           {profileStep === 2 && (() => {
             return (
               <>
-                <Text style={labelStyle}>SELECT YOUR BODY TYPE</Text>
+                <Text style={labelStyle}>Select your body type</Text>
                 <Text style={{ color: COLORS.muted, fontSize: 12, marginBottom: 14, marginTop: -4 }}>Tap the one that looks most like you</Text>
                 {(() => {
                   const isFemale = pf.gender === 'Female';
@@ -3988,7 +4025,7 @@ function Root() {
                 })()}
 
 
-              <Text style={labelStyle}>MEASUREMENTS (INCHES) — OPTIONAL</Text>
+              <Text style={labelStyle}>Measurements (inches) — optional</Text>
               {(() => {
                 const h = pf.heightFt ? parseInt(pf.heightFt) * 12 + (parseInt(pf.heightIn) || 0) : 0;
                 const w = parseFloat(pf.weightLbs) || 0;
@@ -4111,7 +4148,7 @@ function Root() {
                 Be honest — consistency beats intensity. We'll design the right programme for your schedule.
               </Text>
 
-              <Text style={labelStyle}>DAYS PER WEEK YOU CAN TRAIN</Text>
+              <Text style={labelStyle}>Days per week you can train</Text>
               <View style={{ gap: 10, marginBottom: 24 }}>
                 {[
                   { val: '3', label: '3 days / week', sub: 'Upper · Lower · Full Body', badge: 'Popular' },
@@ -4152,7 +4189,7 @@ function Root() {
                 })}
               </View>
 
-              <Text style={labelStyle}>EXPERIENCE LEVEL</Text>
+              <Text style={labelStyle}>Experience level</Text>
               <View style={{ gap: 8, marginBottom: 16 }}>
                 {[
                   { val: 'Beginner',     sub: 'Less than 1 year of consistent training' },
@@ -4196,7 +4233,7 @@ function Root() {
                 This helps us fine-tune your calorie target and recovery recommendations.
               </Text>
 
-              <Text style={labelStyle}>HOW ACTIVE ARE YOU OUTSIDE THE GYM?</Text>
+              <Text style={labelStyle}>How active are you outside the gym?</Text>
               <View style={{ gap: 8, marginBottom: 24 }}>
                 {[
                   { val: 'Sedentary',        sub: 'Desk job, little movement', icon: '🪑' },
@@ -4219,7 +4256,7 @@ function Root() {
                 })}
               </View>
 
-              <Text style={labelStyle}>HOW WELL DO YOU SLEEP?</Text>
+              <Text style={labelStyle}>How well do you sleep?</Text>
               <Text style={{ color: COLORS.muted, fontSize: 12, marginBottom: 12, marginTop: -4 }}>Sleep affects muscle recovery and hormones</Text>
               {(() => {
                 const sleepFeedback = {
@@ -4266,7 +4303,7 @@ function Root() {
         </ScrollView>
 
         {/* Bottom nav */}
-        <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 24, backgroundColor: COLORS.bg, borderTopWidth: 1, borderTopColor: '#ffffff08' }}>
+        <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: 24, paddingTop: 14, paddingBottom: 28, backgroundColor: COLORS.bg, borderTopWidth: 1, borderTopColor: '#ffffff08' }}>
           {profileStep < TOTAL_STEPS ? (
             <AnimatedPress
               style={{ backgroundColor: COLORS.accent, borderRadius: 14, paddingVertical: 16, alignItems: 'center' }}
@@ -5372,9 +5409,6 @@ function Root() {
     else if (protPct >= 0.75)             { insight = 'On track — keep it up 💪';                                    insightColor = '#4ade80';   }
     else if (protPct >= 0.4)              { insight = `${protLeft}g protein left — spread across meals`;              insightColor = '#fbbf24';   }
     else                                  { insight = `Aim for ${Math.min(protLeft, 60)}g protein in your next meal`; insightColor = '#f87171';   }
-    const [barWidth, setBarWidth] = useState(0);
-    const protAnim = useRef(new Animated.Value(0)).current;
-    const calAnim  = useRef(new Animated.Value(0)).current;
     useEffect(() => {
       if (barWidth === 0) return;
       Animated.parallel([
@@ -7923,9 +7957,11 @@ const styles = StyleSheet.create({
 export default function App() {
   return (
     <ErrorBoundary>
-      <View style={{ flex: 1, backgroundColor: '#0f0f0f' }}>
-        <Root />
-      </View>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+        <View style={{ flex: 1, backgroundColor: '#0f0f0f' }}>
+          <Root />
+        </View>
+      </TouchableWithoutFeedback>
     </ErrorBoundary>
   );
 }

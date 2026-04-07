@@ -13,7 +13,11 @@
       "Bash(/c/Python314/python apply_theme.py)",
       "Bash(grep -n \"backgroundColor: ''#0c0c1e''\" \"c:/Users/Gbutt/OneDrive/Desktop/Code/GB-Fit/GB-Fit/App.js\")",
       "Bash(rm -rf node_modules package-lock.json)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(node -e \"console.log\\(require\\('./node_modules/expo/package.json'\\).version\\)\")",
+      "Bash(node -e \"console.log\\(require\\('./node_modules/@react-native-picker/picker/package.json'\\).version\\)\")",
+      "Bash(node -e \"console.log\\(require\\('./node_modules/react-native/package.json'\\).version\\)\")",
+      "Bash(grep -v \"//\")"
     ]
   }
 }
